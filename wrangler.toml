@@ -6,9 +6,9 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "period-tracker-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "52c9542a-4cdc-497b-b5c8-e6769ecd3d66"
 
 [vars]
-GOOGLE_CLIENT_ID = "REPLACE_WITH_YOUR_GOOGLE_OAUTH_CLIENT_ID"
+GOOGLE_CLIENT_ID = "268073364542-2tggmgb29gkimo56odllfipefrsldl10.apps.googleusercontent.com"
 VAPID_PUBLIC_KEY = "BNoI6HHH1hrdKhl0ZDUI1rH-Gciig7et7_Ln-qxdhOSoW5T-nL0qxk-b1RLr6Ck3AF_Ftgcl9v7z3M4o0a0nAs8"
 VAPID_SUBJECT = "mailto:akyeong12@gmail.com"
