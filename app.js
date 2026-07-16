@@ -81,7 +81,6 @@ function renderLoading() {
 function renderLogin(pendingInvite) {
   appEl.innerHTML = `
     <div class="login-screen">
-      <div class="brand">🩸📅</div>
       <h1>우리 둘의 생리주기 캘린더</h1>
       <p>구글 계정으로 로그인해주세요</p>
       ${pendingInvite ? `<div class="invite-note">초대 링크로 접속했어요</div>` : ""}
