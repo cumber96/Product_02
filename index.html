@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>우리 둘의 생리주기 캘린더</title>
+  <meta name="theme-color" content="#ff6f91">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="생리주기">
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <h2>안녕하세요 반갑습니다.</h2>
+  <div id="app">
+    <div class="loading">불러오는 중…</div>
+  </div>
+  <script src="/app.js" type="module"></script>
 </body>
 </html>

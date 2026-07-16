@@ -1,0 +1,19 @@
+{
+  "name": "product_02",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "둘만 쓰는 생리주기 예측 웹앱 (Cloudflare Pages + D1)",
+  "scripts": {
+    "dev": "wrangler pages dev . --d1=DB --compatibility-flag=nodejs_compat",
+    "d1:migrate:local": "wrangler d1 execute period-tracker-db --local --file=./migrations/0001_init.sql",
+    "d1:migrate:remote": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0001_init.sql",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  }
+}

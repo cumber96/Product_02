@@ -1,0 +1,14 @@
+name = "product_02"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "period-tracker-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[vars]
+GOOGLE_CLIENT_ID = "REPLACE_WITH_YOUR_GOOGLE_OAUTH_CLIENT_ID"
+VAPID_PUBLIC_KEY = "BNoI6HHH1hrdKhl0ZDUI1rH-Gciig7et7_Ln-qxdhOSoW5T-nL0qxk-b1RLr6Ck3AF_Ftgcl9v7z3M4o0a0nAs8"
+VAPID_SUBJECT = "mailto:akyeong12@gmail.com"
