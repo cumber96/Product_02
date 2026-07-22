@@ -360,11 +360,15 @@ button {
 .day-cell.fertile { background: var(--luxe-soft); border-radius: var(--radius-xs); }
 
 .day-cell.ovulation::after {
-  content: "💧";
+  content: "";
   position: absolute;
-  top: 1px;
-  right: 4px;
-  font-size: 9px;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--luxe);
 }
 
 .day-cell.today .num {
@@ -392,6 +396,7 @@ button {
 .dot.period { background: var(--primary); }
 .dot.predicted { border: 1.5px dashed var(--primary); }
 .dot.fertile { background: var(--luxe-soft); border-radius: 3px; }
+.dot.ovulation { background: var(--luxe); }
 
 /* --- Form --- */
 .form-row {

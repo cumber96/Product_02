@@ -262,7 +262,7 @@ function renderCalendarCard() {
         <span><i class="dot period"></i>생리 기록</span>
         <span><i class="dot predicted"></i>예상 생리</span>
         <span><i class="dot fertile"></i>가임기</span>
-        <span>💧 배란 예상일</span>
+        <span><i class="dot ovulation"></i>배란 예상일</span>
       </div>
     </div>
   `;
