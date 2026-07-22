@@ -1,107 +1,102 @@
 # Current Task
 
 ## Goal
-전체 아이콘을 Lucide 아이콘 체계로 교체 (이모지/문자 아이콘 → SVG 아이콘)
+Pretendard를 프로젝트 기본 폰트로 적용 (셀프 호스팅, Subset woff2)
 
 ## Background
-1차 리뷰 항목 1~4 완료 후, 실사용 피드백을 기다리는 중 별도로 진행한 디자인 작업.
-DESIGN.md에 Icon System(Lucide, Outline Only, Stroke 2px, Size 16/20/24) 규칙이 이미 정의되어 있었고,
-이번 작업 전 아래 순서로 사전 설계를 진행함.
-1. 현재 프로젝트의 전체 아이콘 인벤토리 조사 (이모지 11종 + CSS 도형 5종 + PWA 아이콘)
-2. Lucide 매핑표 초안 작성 → 사용자 피드백 반영해 2차 수정
-   - "예측 정보": `bar-chart-3` → `sparkles` (통계보다 예측의 의미가 강함)
-   - "캘린더 기록": `clipboard-list` → `notebook-text` (체크리스트보다 기록의 성격)
-   - 캘린더 셀 안의 작은 마킹(생리/예상생리/가임기/배란)은 Lucide로 바꾸지 않고 CSS 도형 유지,
-     **범례(legend)에서만** Lucide 아이콘 사용
-3. 구현 방식 설계: 이 프로젝트는 React/TypeScript/번들러가 전혀 없는 순수 vanilla JS + 정적 배포 구조라
-   사용자가 처음 제시한 `icons.ts` + `lucide-react` 예시가 그대로 동작하지 않음을 확인.
-   → React/TS/npm 패키지/번들러/CDN 없이, `icons.js` + 인라인 SVG 문자열 방식으로 확정 (Lucide 공식
-   GitHub 소스에서 정확한 path 데이터를 미리 가져와 검증함)
-4. 최종 매핑표 승인 후, 범례 색상 유지 여부까지 확인받고 이번 작업 착수
+아이콘 교체(Lucide) 작업 이후, 별도로 진행한 디자인 작업. 진행 순서:
+1. 현재 폰트 적용 구조 조사 — `style.css`의 `body`에 이미 "Pretendard"가 폰트 스택에 있었지만
+   `@font-face`가 어디에도 없어 실제로는 전혀 로드되지 않고 있었음. 순서도 `-apple-system`/`Inter`가
+   앞에 있어 웹폰트를 추가해도 애플 기기에서는 절대 선택되지 않는 구조였음.
+2. 적용 방법 설계: React/TS/번들러 없는 정적 배포 구조이므로 CDN 대신 셀프 호스팅으로 결정.
+3. Pretendard 공식 배포판을 확인한 결과 "Dynamic Subset"은 굵기당 92개 조각 파일(4개 굵기 기준 368개
+   파일 + 약 3,300줄 CSS)로 구성되어 있음을 확인, 손으로 관리하기엔 과함을 사용자에게 알리고
+   굵기당 파일 1개인 단순 "Subset"으로 변경 확정.
 
 ## Scope
-- `icons.js` 신규 생성 (repo 루트, `app.js`와 같은 위치) — Lucide 아이콘 15개를 인라인 SVG 문자열로 export
-- `app.js`의 이모지/문자 아이콘 13개 위치 → `icons.js`에서 import한 아이콘으로 교체
-- 캘린더 범례(legend) 4곳: `<i class="dot X">` → Lucide 아이콘으로 교체 (색상은 기존 상태 의미 유지)
-- 로그아웃 버튼: 아이콘 없음 → `LogOut` 아이콘 추가 (DESIGN.md 규칙 반영)
-- `style.css`: 더 이상 쓰이지 않는 `.dot`, `.dot.period`, `.dot.predicted`, `.dot.fertile`, `.dot.ovulation` 삭제,
-  아이콘 공통 정렬 스타일 추가, 범례 아이콘 색상을 기존 dot 색상과 동일하게 유지하는 규칙 추가
-- **범위 아님**: 기능/레이아웃/문구 변경, 캘린더 셀 안의 CSS 마킹 변경, React/TS/번들러/CDN 도입
+- `/fonts` 디렉터리 신규 생성, Pretendard 공식 저장소에서 Regular(400)/Medium(500)/SemiBold(600)/
+  Bold(700) subset woff2 4개 다운로드
+- `style.css` 상단에 `@font-face` 4개 추가 (`font-display: swap`)
+- `body`의 `font-family`를 Pretendard 우선으로 재정렬
+- `index.html`에 자주 쓰이는 두 굵기(400, 600) `<link rel="preload">` 추가
+- **범위 아님**: font-size/font-weight/line-height 변경(Typography Scale 개선은 다음 작업으로 분리),
+  레이아웃/기능 변경, CDN/React/TypeScript/번들러 도입
 
 ## Definition of Done
-- 화면에 보이는 모든 이모지(⚙️🔔💌📊✍️📋💜)와 문자 아이콘(‹›)이 Lucide SVG 아이콘으로 교체됨
-- 캘린더 셀 안의 마킹(생리/예상생리/가임기/배란/오늘)은 기존 CSS 그대로 유지
-- 범례 아이콘 색상이 기존 dot 색상(생리·예상생리=빨강, 가임기=연보라, 배란=진보라)과 동일하게 유지됨
-- 장식용 아이콘은 모두 `aria-hidden="true"`
-- 기존 기능(로그인, 캘린더, 예측 카드, 날짜 상세 페이지, 사랑기록, 설정, 알림, 기록 CRUD)에 회귀 없음
-- 모바일 뷰포트에서 아이콘 크기/정렬 깨짐 없음
-- 브라우저 콘솔 오류 없음
-- 사용하지 않게 된 CSS(`.dot` 계열) 삭제
-- React/TypeScript/npm 패키지/번들러/CDN 도입 없음 (순수 vanilla JS 유지)
+- Pretendard가 실제로 로드되어 화면에 적용됨 (기존엔 이름만 있고 미적용 상태였음)
+- 기존 font-size/font-weight/line-height 값 변경 없음
+- preload 적용, `font-display: swap`으로 텍스트 안 보이는 시간 없음
+- 브라우저 콘솔에 폰트 관련 오류 없음, Lighthouse에 폰트 관련 경고 없음
+- 레이아웃 깨짐 없음 (모바일 뷰포트 포함)
 
 ---
 
 # Result
 
 ## Status
-✅ Completed, push/배포 완료 (commit d2defa3, main으로 push)
+✅ Completed (구현 및 로컬 테스트 완료, 커밋/배포는 사용자 확인 후 진행 예정)
 
 ## 문제 분석
-전체 이모지/문자 아이콘(⚙️🔔💌📊✍️📋💜, ‹›)이 화면마다 하드코딩되어 있었고, 같은 의미(뒤로가기 vs 이전 달)에
-같은 글자(‹)가 재사용되는 등 일관성이 없었음. DESIGN.md의 Icon System(Lucide, Outline Only)을 적용하기로
-했으나, 사용자가 제시한 예시(`icons.ts` + `lucide-react`)는 React/TypeScript 전제였고 실제 프로젝트는
-번들러 없는 순수 vanilla JS 구조라 그대로 적용 불가능함을 먼저 확인함. 이후 icons.js + 인라인 SVG 문자열
-방식으로 합의하고 진행함.
+`style.css`의 `body` 폰트 스택에 `"Pretendard"`라는 이름이 이미 들어 있었지만, `@font-face` 선언이
+프로젝트 어디에도 없어 웹폰트로 로드되고 있지 않았음 — 이름만 있고 실체가 없는 상태였음. 게다가 스택
+순서상 `-apple-system`/`BlinkMacSystemFont`/`"Inter"`가 앞서 있어, 설령 폰트를 로드해도 애플 기기(가장
+흔한 사용 환경)에서는 시스템 폰트가 먼저 매칭되어 절대 쓰이지 않는 구조였음. 이번 작업은 "이름만 있던
+설정"을 실제로 동작하게 만드는 것이었음.
 
 ## 수정 내용
-- `icons.js` (신규): Lucide 공식 GitHub 소스(MIT 라이선스)에서 정확한 path 데이터를 가져와, 공통 `icon()`
-  팩토리 함수로 감싼 15개 아이콘을 named export (`Settings`, `ArrowLeft`, `ChevronLeft`, `ChevronRight`,
-  `Bell`, `LogOut`, `UserPlus`, `Sparkles`, `SquarePen`, `NotebookText`, `Heart`, `Droplet`, `CircleDashed`,
-  `Circle`, `Egg`). 모든 아이콘은 `stroke-width: 2`, `fill: none`, `aria-hidden="true"`로 고정.
-- `app.js`
-  - 최상단에 `icons.js`에서 15개 아이콘을 한 번에 import (프로젝트 전체에서 이 한 줄만 아이콘을 가져옴)
-  - 이모지/문자 아이콘 13개 위치(총 18회 출현) → 대응하는 Lucide 아이콘으로 교체
-  - 로그아웃 버튼에 `LogOut` 아이콘 추가 (기존엔 텍스트만 있었음)
-  - 캘린더 범례 4곳: `<i class="dot X">` → `Droplet`/`CircleDashed`/`Circle`/`Egg` 아이콘 + 색상 구분 클래스
-    (`legend-period` 등)로 교체. **캘린더 셀 안의 실제 마킹(CSS 도형)은 전혀 손대지 않음.**
+- `/fonts` (신규 디렉터리): Pretendard 공식 GitHub 저장소(`orioncactus/pretendard`)의
+  `packages/pretendard/dist/web/static/woff2-subset/`에서 4개 파일 다운로드
+  - `Pretendard-Regular.subset.woff2` (400, 267KB)
+  - `Pretendard-Medium.subset.woff2` (500, 268KB)
+  - `Pretendard-SemiBold.subset.woff2` (600, 269KB)
+  - `Pretendard-Bold.subset.woff2` (700, 271KB)
+  - 한글 완성형+영문+기호만 포함된 subset이라 원본 풀세트 대비 용량이 훨씬 작음
 - `style.css`
-  - 사용하지 않게 된 `.dot`, `.dot.period`, `.dot.predicted`, `.dot.fertile`, `.dot.ovulation` 삭제
-  - 공통 `.icon` 정렬 규칙 추가 (`vertical-align`, `flex-shrink`)
-  - `.icon-btn`, `.calendar-header button`, `.detail-header button`을 flex 중앙 정렬로 조정 (기존엔 텍스트
-    글자 하나를 넣는 전제였어서, SVG를 넣으려면 정렬 방식 보정이 필요했음) + `.icon-btn`에 명시적
-    `color: var(--ink)` 추가
-  - 범례 아이콘 색상 규칙 추가 — 기존 dot 색상과 동일하게 유지: 생리·예상생리 = `var(--primary)`(빨강),
-    배란 = `var(--luxe)`(진보라), 가임기 = 아이콘 `var(--luxe)` + 배경 `var(--luxe-soft)`(연보라) 칩 형태
-    (연보라를 아이콘 선 색으로 직접 쓰면 흰 배경에서 거의 안 보여 명도 대비가 깨지므로, 배경 칩으로 표현해
-    "연보라색을 유지"와 "명도 대비 유지"를 동시에 만족시킴 — DESIGN.md 11. Accessibility 규칙 반영)
+  - 파일 최상단에 `@font-face` 4개 추가, 모두 `font-display: swap`
+  - `body`의 `font-family`를 `"Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif`로 변경 (Pretendard 최우선, 로드 실패시에만 시스템 폰트 폴백).
+    기존에 있던 `"Inter"`는 제거함 — Pretendard와 마찬가지로 `@font-face` 없이 이름만 있던 죽은 폴백이라
+    실질적 동작 변화 없음
+  - font-size/font-weight/line-height는 일절 변경하지 않음
+- `index.html`
+  - `<link rel="preload">` 2개 추가: Regular(400)와 SemiBold(600)만 선택
+  - 이유: 로그인 화면(h1=600, 본문=400)과 홈 화면 모두 이 두 굵기가 최초 화면에 보장적으로 쓰이는 반면,
+    500(버튼/라벨)과 700(예측 카드 숫자)은 화면 상태에 따라 등장 시점이 달라 preload 대상에서 제외 —
+    Lighthouse가 "미사용 preload"로 지적할 여지를 없앰
+  - `crossorigin` 속성 포함 (동일 출처라도 폰트 preload는 항상 anonymous CORS 모드로 요청되므로,
+    빠뜨리면 실제 `@font-face` 요청과 매칭되지 않아 preload가 무효화됨)
 
 ## 테스트 방법과 결과
-1. `node --check app.js`, `node --check icons.js` 구문 검증 통과, CSS 중괄호 짝 검증 통과
-2. import된 아이콘 15개가 `app.js`에서 각각 최소 1회 이상 실제로 사용됨을 확인 (미사용 import 없음)
-3. 로컬 D1 + wrangler dev + Playwright(Chromium)로 실제 화면 검증
-   - 홈 화면(390px, 360px 두 뷰포트): 설정 아이콘, 예측 정보(Sparkles), 캘린더 이전/다음 달(Chevron),
-     범례 4종, 새 기록 추가(SquarePen) 모두 정상 렌더링·정렬, 360px에서도 깨짐 없음
-   - 설정 화면: 뒤로가기(ArrowLeft), 알림 설정(Bell), 로그아웃(LogOut) 정상
-   - 날짜 상세 화면: 뒤로가기, 캘린더 기록(NotebookText), 사랑기록(Heart) 정상
-   - 범례: 생리(빨강 Droplet), 예상 생리(빨강 CircleDashed), 가임기(연보라 배경 칩 + 보라 Circle),
-     배란(보라 Egg) — 기존 색상 의미 그대로 유지됨을 스크린샷으로 확인
-4. 기능 회귀 테스트: 새 기록 추가 → 날짜 상세 진입 → 수정 → 사랑기록 추가 → 사랑기록 삭제 → 기록 삭제 →
-   로그아웃까지 전체 흐름을 Playwright로 실행, 모두 정상 동작
-5. 브라우저 콘솔 오류 확인: 로그인 이후 모든 화면에서 콘솔 오류 0건. (로그아웃 후 로그인 화면에서 Google
-   Identity Services가 `localhost` origin을 승인되지 않은 것으로 보고하는 메시지가 뜨는데, 이는 로컬 테스트
-   환경의 기존 한계이며 이번 아이콘 작업과 무관 — 실제 배포 도메인에서는 발생하지 않음)
+1. 다운로드한 4개 파일이 유효한 WOFF2 포맷인지 `file` 명령으로 확인 — 모두 정상
+2. CSS 중괄호 짝 검증 통과
+3. 로컬 wrangler dev + Playwright(Chromium)로 실제 로딩 확인
+   - `document.fonts`로 로드 상태 확인: 로그인 화면(미인증)에서는 400/600만 `status=loaded`, 500/700은
+     `unloaded` (해당 화면에 그 굵기 텍스트가 없으므로 정상 — 필요할 때만 로드되는 브라우저 기본 동작)
+   - 인증된 홈 화면에서는 400/500/600/700 전부 `status=loaded`
+   - `getComputedStyle(document.body).fontFamily`로 Pretendard가 최우선으로 적용됨을 확인
+   - 스크린샷으로 로그인 화면·홈 화면 모두 Pretendard 특유의 한글 글자 형태로 정상 렌더링, 레이아웃
+     깨짐 없음 확인
+4. 브라우저 콘솔 오류: 폰트 관련 오류 0건 (로그인 화면에서 보이는 Google Identity Services 관련 경고는
+   `localhost` 테스트 환경의 기존 한계로 폰트와 무관, 이전 작업들에서도 동일하게 확인된 사항)
+5. Lighthouse(`--preset=desktop`, performance 카테고리) 실행
+   - `font-display-insight` 감사 **score 1 (통과)** — `font-display: swap` 정상 인식
+   - `network-requests` 상세에서 두 preload 파일이 `resourceType: Font`, `priority: High`로 실제
+     우선순위 상승되어 요청됨을 확인 — "미사용 preload" 경고 없음
+   - `render-blocking-insight`는 `style.css` 자체(2.8KB)만 지적, 폰트 관련 항목 없음
+   - 폰트로 인한 신규 경고/오류 없음
 6. 테스트 데이터 모두 정리, dev 서버 종료 완료
 
 ## 수정 파일
-- `icons.js` (신규)
-- `app.js`
+- `/fonts/Pretendard-Regular.subset.woff2` (신규)
+- `/fonts/Pretendard-Medium.subset.woff2` (신규)
+- `/fonts/Pretendard-SemiBold.subset.woff2` (신규)
+- `/fonts/Pretendard-Bold.subset.woff2` (신규)
 - `style.css`
+- `index.html`
 
 ## 기존 기능에 미치는 영향
-- 기능/레이아웃/문구는 변경하지 않음 — 아이콘 렌더링 방식만 이모지/문자 → SVG로 교체
-- 캘린더 셀 안의 마킹(생리/예상생리/가임기/배란/오늘)은 CSS 그대로 유지, 범례만 아이콘 교체
-- React/TypeScript/새 npm 패키지/번들러/CDN 도입 없음 — 기존 vanilla JS 정적 배포 구조 그대로 유지
+- font-size/font-weight/line-height, 레이아웃, 기능은 전혀 변경하지 않음 — 글꼴만 교체됨
+- Typography Scale(디자인 토큰화)은 이번 범위에서 제외, 다음 작업으로 분리
+- React/TypeScript/번들러/CDN 도입 없음, 정적 배포 구조 그대로 유지
 
 ## 로컬 커밋 / 배포 여부
-✅ 로컬 커밋 완료 (d2defa3), 사용자 확인 후 `origin/main`으로 push 완료.
-Cloudflare Pages Git 연동을 통해 자동 배포됨. (새 DB 마이그레이션 없어 원격 D1 작업 불필요)
+아직 커밋하지 않음. 커밋 및 push/배포 여부 확인 부탁드립니다.
