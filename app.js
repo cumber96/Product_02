@@ -575,6 +575,22 @@ async function subscribeToPush() {
   }
 }
 
+// ---------- Toast ----------
+let toastTimer = null;
+
+function showToast(message) {
+  let el = document.getElementById("toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toast";
+    el.className = "toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2000);
+}
+
 // ---------- Utils ----------
 function ymd(date) {
   const y = date.getFullYear();
