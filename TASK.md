@@ -30,7 +30,7 @@
 # Result
 
 ## Status
-✅ Completed (구현 및 로컬 테스트 완료, 커밋/배포는 사용자 확인 후 진행 예정)
+✅ Completed, push/배포 완료 (commit 0fa3ebe, main으로 push)
 
 ## 문제 분석
 기존 배란 예상일 마킹은 `.day-cell.ovulation::after`에 💧 이모지를 `font-size: 9px`로 날짜 칸 우측 상단에 절대 위치시키는 방식이었음.
@@ -63,7 +63,8 @@
 - 캘린더의 다른 마킹(생리 기록, 예상 생리, 오늘 날짜)과 하단 리스트, 기록 CRUD, 알림 등은 변경하지 않음.
 
 ## 로컬 커밋 / 배포 여부
-아직 커밋하지 않음. 커밋 및 push/배포 여부 확인 부탁드립니다.
+✅ 로컬 커밋 완료 (0fa3ebe), 사용자 확인 후 `origin/main`으로 push 완료.
+Cloudflare Pages Git 연동을 통해 자동 배포됨.
 
 ## Next Recommended Task
 1차 리뷰 항목 3: 캘린더 기록 확인 방식 변경 (하단 리스트 제거, 날짜 선택 시 상세 페이지 도입) — 사용자 승인 후 진행
