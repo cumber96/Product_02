@@ -16,6 +16,7 @@ const state = {
   editingLogId: null,
   inviteResult: null,
   selectedDate: null,
+  settingsOpen: false,
 };
 
 const appEl = document.getElementById("app");
@@ -137,10 +138,10 @@ async function handleGoogleCredential(response) {
 // ---------- App screen ----------
 async function renderApp() {
   if (state.selectedDate) return renderDetailScreen();
+  if (state.settingsOpen) return renderSettingsScreen();
 
   const { user, partnerConnected, partner } = state.me;
   const isOwner = user.role === "owner";
-  const pushStatus = await getPushStatus();
 
   appEl.innerHTML = `
     <div class="topbar">
@@ -157,11 +158,9 @@ async function renderApp() {
           <span class="role-badge ${isOwner ? "" : "viewer"}">${isOwner ? "owner" : "viewer"}</span>
         </div>
       </div>
-      <button class="icon-btn" data-action="logout">로그아웃</button>
+      <button class="icon-btn" data-action="open-settings" aria-label="설정">⚙️</button>
     </div>
 
-    ${renderIOSBanner()}
-    ${renderPushSection(pushStatus)}
     ${isOwner ? renderInviteCard(partnerConnected) : renderPartnerCard(partner)}
     ${renderSummaryCard()}
     ${renderCalendarCard()}
@@ -169,26 +168,53 @@ async function renderApp() {
   `;
 }
 
-function renderIOSBanner() {
-  if (!isIOS() || isStandalone()) return "";
-  return `
-    <div class="banner">
-      <strong>📱 홈 화면에 추가해주세요</strong>
-      아이폰에서 알림을 받으려면 사파리 하단 <b>공유 버튼</b> → <b>홈 화면에 추가</b>를 눌러 앱을 설치해야 해요. 설치 후 이 앱을 홈 화면 아이콘으로 다시 열어주세요.
+// ---------- Settings screen ----------
+async function renderSettingsScreen() {
+  const pushStatus = await getPushStatus();
+
+  appEl.innerHTML = `
+    <div class="detail-header">
+      <button data-action="close-settings" aria-label="뒤로">‹</button>
+      <div class="detail-date">설정</div>
+    </div>
+    ${renderNotificationSettingsCard(pushStatus)}
+    <div class="card">
+      <button class="btn ghost block" data-action="logout">로그아웃</button>
     </div>
   `;
 }
 
-function renderPushSection(pushStatus) {
-  if (pushStatus === "needs-install" || pushStatus === "unsupported") return "";
+function renderNotificationSettingsCard(pushStatus) {
+  if (pushStatus === "unsupported") {
+    return `
+      <div class="card">
+        <h2>🔔 알림 설정</h2>
+        <p class="hint">이 브라우저에서는 알림을 지원하지 않아요.</p>
+      </div>
+    `;
+  }
+  if (pushStatus === "needs-install") {
+    return `
+      <div class="card">
+        <h2>🔔 알림 설정</h2>
+        <p class="hint">아이폰에서 알림을 받으려면 먼저 사파리 하단 <b>공유 버튼</b> → <b>홈 화면에 추가</b>로 앱을 설치해주세요. 설치 후 홈 화면 아이콘으로 다시 열면 켤 수 있어요.</p>
+      </div>
+    `;
+  }
   if (pushStatus === "subscribed") {
-    return `<div class="banner">🔔 알림이 켜져 있어요</div>`;
+    return `
+      <div class="card">
+        <h2>🔔 알림 설정</h2>
+        <p class="hint">알림이 켜져 있어요. 상대방이 기록을 업데이트하면 알려드려요.</p>
+        <button class="btn ghost block" data-action="unsubscribe-push" style="margin-top:12px">알림 끄기</button>
+      </div>
+    `;
   }
   return `
-    <div class="banner">
-      <strong>🔔 알림을 받아보세요</strong>
-      상대방이 기록을 업데이트하면 바로 알려드려요.
-      <div style="margin-top:8px"><button class="btn" data-action="subscribe-push">알림 받기</button></div>
+    <div class="card">
+      <h2>🔔 알림 설정</h2>
+      <p class="hint">상대방이 기록을 업데이트하면 바로 알려드려요.</p>
+      <button class="btn block" data-action="subscribe-push" style="margin-top:12px">알림 켜기</button>
     </div>
   `;
 }
@@ -505,6 +531,15 @@ async function onAppClick(e) {
     return renderApp();
   }
   if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
+  if (action === "open-settings") {
+    state.settingsOpen = true;
+    return renderApp();
+  }
+  if (action === "close-settings") {
+    state.settingsOpen = false;
+    return renderApp();
+  }
+  if (action === "unsubscribe-push") return handleUnsubscribePush();
 }
 
 async function onAppSubmit(e) {
@@ -683,6 +718,22 @@ async function subscribeToPush() {
     await renderApp();
   } catch {
     showToast("알림 설정 실패");
+  }
+}
+
+async function handleUnsubscribePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      await api("/api/push/subscribe", { method: "DELETE", body: JSON.stringify({ endpoint }) });
+    }
+    showToast("알림을 껐어요");
+    await renderApp();
+  } catch {
+    showToast("알림 끄기 실패");
   }
 }
 

@@ -154,14 +154,11 @@ body {
 .icon-btn {
   border: none;
   background: transparent;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 22px;
   cursor: pointer;
   padding: 6px 4px;
+  line-height: 1;
 }
-
-.icon-btn:hover { text-decoration: underline; }
 
 /* --- Card --- */
 .card {
@@ -179,18 +176,12 @@ body {
   color: var(--ink);
 }
 
-.banner {
-  background: var(--surface-soft);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  padding: var(--space-base);
-  margin-bottom: var(--space-md);
+.card p.hint {
+  color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
-  color: var(--body-text);
+  margin: 0;
 }
-
-.banner strong { display: block; margin-bottom: var(--space-xs); color: var(--ink); }
 
 .summary-grid {
   display: grid;
