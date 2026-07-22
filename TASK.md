@@ -34,7 +34,7 @@ Pretendard를 프로젝트 기본 폰트로 적용 (셀프 호스팅, Subset wof
 # Result
 
 ## Status
-✅ Completed (구현 및 로컬 테스트 완료, 커밋/배포는 사용자 확인 후 진행 예정)
+✅ Completed, push/배포 완료 (commit 3715076, main으로 push)
 
 ## 문제 분석
 `style.css`의 `body` 폰트 스택에 `"Pretendard"`라는 이름이 이미 들어 있었지만, `@font-face` 선언이
@@ -99,4 +99,5 @@ Pretendard를 프로젝트 기본 폰트로 적용 (셀프 호스팅, Subset wof
 - React/TypeScript/번들러/CDN 도입 없음, 정적 배포 구조 그대로 유지
 
 ## 로컬 커밋 / 배포 여부
-아직 커밋하지 않음. 커밋 및 push/배포 여부 확인 부탁드립니다.
+✅ 로컬 커밋 완료 (3715076), 사용자 확인 후 `origin/main`으로 push 완료.
+Cloudflare Pages Git 연동을 통해 자동 배포됨. (새 DB 마이그레이션 없어 원격 D1 작업 불필요)
