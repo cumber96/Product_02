@@ -44,7 +44,7 @@ DESIGN.md에 Icon System(Lucide, Outline Only, Stroke 2px, Size 16/20/24) 규칙
 # Result
 
 ## Status
-✅ Completed (구현 및 로컬 테스트 완료, 커밋/배포는 사용자 확인 후 진행 예정)
+✅ Completed, push/배포 완료 (commit d2defa3, main으로 push)
 
 ## 문제 분석
 전체 이모지/문자 아이콘(⚙️🔔💌📊✍️📋💜, ‹›)이 화면마다 하드코딩되어 있었고, 같은 의미(뒤로가기 vs 이전 달)에
@@ -103,4 +103,5 @@ DESIGN.md에 Icon System(Lucide, Outline Only, Stroke 2px, Size 16/20/24) 규칙
 - React/TypeScript/새 npm 패키지/번들러/CDN 도입 없음 — 기존 vanilla JS 정적 배포 구조 그대로 유지
 
 ## 로컬 커밋 / 배포 여부
-아직 커밋하지 않음. 커밋 및 push/배포 여부 확인 부탁드립니다.
+✅ 로컬 커밋 완료 (d2defa3), 사용자 확인 후 `origin/main`으로 push 완료.
+Cloudflare Pages Git 연동을 통해 자동 배포됨. (새 DB 마이그레이션 없어 원격 D1 작업 불필요)
