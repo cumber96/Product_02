@@ -19,6 +19,12 @@ export async function onRequestPost(context) {
   const now = Math.floor(Date.now() / 1000);
   const id = crypto.randomUUID();
 
+  // 기기 재설치/재구독 등으로 endpoint가 바뀌면 이전 구독이 정리되지 않고 남아
+  // 같은 기록에 중복 발송되므로, 새로 구독할 때 그 사용자의 다른 구독은 제거한다.
+  await env.DB.prepare("DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint != ?")
+    .bind(user.id, endpoint)
+    .run();
+
   await env.DB.prepare(
     `INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at)
      VALUES (?, ?, ?, ?, ?, ?)
