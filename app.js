@@ -228,20 +228,16 @@ function renderSummaryCard() {
       <h2>📊 예측 정보</h2>
       <div class="summary-grid">
         <div class="summary-item">
-          <div class="label">다음 예상 생리일</div>
-          <div class="value">${formatShort(p.nextPredictedStart)}</div>
-        </div>
-        <div class="summary-item">
-          <div class="label">평균 주기</div>
+          <div class="label">평균 생리주기</div>
           <div class="value">${p.avgCycleLength}일</div>
         </div>
         <div class="summary-item">
-          <div class="label">배란 예상일</div>
-          <div class="value">${formatShort(p.ovulationDate)}</div>
+          <div class="label">평균 생리기간</div>
+          <div class="value">${p.avgPeriodLength}일</div>
         </div>
         <div class="summary-item">
-          <div class="label">가임기</div>
-          <div class="value">${formatShort(p.fertileWindowStart)} ~ ${formatShort(p.fertileWindowEnd)}</div>
+          <div class="label">마지막 생리일</div>
+          <div class="value">${formatShort(p.lastStartDate)}</div>
         </div>
       </div>
     </div>
