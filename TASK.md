@@ -37,7 +37,7 @@
 # Result
 
 ## Status
-✅ Completed (구현 및 로컬 테스트 완료, 커밋/배포는 사용자 확인 후 진행 예정)
+✅ Completed, 원격 D1 마이그레이션 적용 + push/배포 완료 (commit 398e063, main으로 push)
 
 ## 문제 분석
 기존에는 캘린더 아래 "📋 기록" 리스트가 모든 생리 기록을 항상 나열했고, 날짜와 기록을 연결해서 보려면
@@ -93,7 +93,10 @@
 - 원격(운영) DB에는 아직 `love_logs` 테이블이 없으므로, 배포 전에 `wrangler d1 execute --remote --file=./migrations/0002_love_logs.sql` (또는 `npm run d1:migrate:remote:love`) 실행이 반드시 필요함.
 
 ## 로컬 커밋 / 배포 여부
-아직 커밋하지 않음. 커밋 및 push/배포(+ 원격 D1 마이그레이션) 여부 확인 부탁드립니다.
+✅ 로컬 커밋 완료 (398e063).
+✅ 원격 D1에 `0002_love_logs.sql` 마이그레이션 적용 완료 — 적용 전 기존 데이터(users 2건, cycle_logs 12건) 확인,
+적용 후에도 동일하게 유지됨을 재확인 (신규 `love_logs` 테이블만 추가, 데이터 손실 없음).
+✅ `origin/main`으로 push 완료. Cloudflare Pages Git 연동을 통해 자동 배포됨.
 
 ## Next Recommended Task
 1차 리뷰 항목 4: 설정 페이지 추가 (알림 설정 / 로그인 및 계정 / 기타 앱 설정) — 사용자 승인 후 진행
