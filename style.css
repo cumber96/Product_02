@@ -37,6 +37,13 @@
 
 * { box-sizing: border-box; }
 
+/* --- Icon --- */
+.icon {
+  display: inline-block;
+  vertical-align: -3px;
+  flex-shrink: 0;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
@@ -154,10 +161,12 @@ body {
 .icon-btn {
   border: none;
   background: transparent;
-  font-size: 22px;
+  color: var(--ink);
   cursor: pointer;
-  padding: 6px 4px;
-  line-height: 1;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* --- Card --- */
@@ -289,7 +298,9 @@ button {
   border-radius: var(--radius-full);
   cursor: pointer;
   color: var(--ink);
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .detail-header .detail-date {
@@ -320,7 +331,9 @@ button {
   border-radius: var(--radius-full);
   cursor: pointer;
   color: var(--ink);
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .weekday-row, .calendar-grid {
@@ -409,11 +422,22 @@ button {
 
 .legend span { display: inline-flex; align-items: center; gap: var(--space-xs); }
 
-.dot { width: 10px; height: 10px; border-radius: var(--radius-full); display: inline-block; }
-.dot.period { background: var(--primary); }
-.dot.predicted { border: 1.5px dashed var(--primary); }
-.dot.fertile { background: var(--luxe-soft); border-radius: 3px; }
-.dot.ovulation { background: var(--luxe); }
+/* 범례 아이콘 색상 — 기존 dot 마킹의 색상 의미를 그대로 유지 */
+.legend-period .icon,
+.legend-predicted .icon {
+  color: var(--primary);
+}
+
+.legend-ovulation .icon {
+  color: var(--luxe);
+}
+
+.legend-fertile .icon {
+  color: var(--luxe);
+  background: var(--luxe-soft);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
 
 /* --- Form --- */
 .form-row {
