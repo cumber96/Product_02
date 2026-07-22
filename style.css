@@ -282,6 +282,31 @@ button {
   cursor: not-allowed;
 }
 
+/* --- Detail screen --- */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.detail-header button {
+  background: var(--surface-strong);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.detail-header .detail-date {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ink);
+}
+
 /* --- Calendar --- */
 .calendar-header {
   display: flex;
@@ -327,9 +352,10 @@ button {
   justify-content: center;
   font-size: 13px;
   color: var(--ink);
+  cursor: pointer;
 }
 
-.day-cell.empty { visibility: hidden; }
+.day-cell.empty { visibility: hidden; cursor: default; }
 
 .day-cell .num {
   position: relative;

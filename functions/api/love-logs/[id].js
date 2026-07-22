@@ -1,0 +1,23 @@
+import { json } from "../../_lib/auth.js";
+import { notifyPartner } from "../../_lib/push.js";
+
+export async function onRequestDelete(context) {
+  const { env, data, params } = context;
+  const user = data.user;
+
+  if (user.role !== "owner") {
+    return json({ error: "forbidden" }, { status: 403 });
+  }
+
+  await env.DB.prepare("DELETE FROM love_logs WHERE id = ?").bind(params.id).run();
+
+  context.waitUntil(
+    notifyPartner(env, user.id, {
+      title: "사랑기록 삭제됨",
+      body: `${user.name}님이 사랑기록을 삭제했어요`,
+      url: "/",
+    })
+  );
+
+  return json({ ok: true });
+}

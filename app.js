@@ -11,9 +11,11 @@ const state = {
   me: null,
   prediction: null,
   logs: [],
+  loveLogs: [],
   currentMonth: new Date(),
   editingLogId: null,
   inviteResult: null,
+  selectedDate: null,
 };
 
 const appEl = document.getElementById("app");
@@ -57,9 +59,14 @@ async function boot() {
 }
 
 async function loadAppData() {
-  const [prediction, cycles] = await Promise.all([api("/api/prediction"), api("/api/cycles")]);
+  const [prediction, cycles, loveLogs] = await Promise.all([
+    api("/api/prediction"),
+    api("/api/cycles"),
+    api("/api/love-logs"),
+  ]);
   state.prediction = prediction;
   state.logs = cycles.logs;
+  state.loveLogs = loveLogs.logs;
 }
 
 function extractInviteCode() {
@@ -129,6 +136,8 @@ async function handleGoogleCredential(response) {
 
 // ---------- App screen ----------
 async function renderApp() {
+  if (state.selectedDate) return renderDetailScreen();
+
   const { user, partnerConnected, partner } = state.me;
   const isOwner = user.role === "owner";
   const pushStatus = await getPushStatus();
@@ -157,7 +166,6 @@ async function renderApp() {
     ${renderSummaryCard()}
     ${renderCalendarCard()}
     ${isOwner ? renderAddLogForm() : ""}
-    ${renderLogListCard(isOwner)}
   `;
 }
 
@@ -276,7 +284,7 @@ function renderDayCell(cell) {
   if (cell.fertile) classes.push("fertile");
   if (cell.ovulation) classes.push("ovulation");
   if (cell.today) classes.push("today");
-  return `<div class="${classes.join(" ")}"><span class="num">${cell.day}</span></div>`;
+  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}"><span class="num">${cell.day}</span></div>`;
 }
 
 function buildCalendarCells(year, month) {
@@ -302,6 +310,7 @@ function buildCalendarCells(year, month) {
 
     cells.push({
       day: d,
+      date: dateStr,
       period: inPeriod,
       predicted: !inPeriod && inPredicted,
       fertile: inFertile,
@@ -335,57 +344,124 @@ function renderAddLogForm() {
   `;
 }
 
-function renderLogListCard(isOwner) {
-  if (state.logs.length === 0) {
-    return `<div class="card"><h2>📋 기록</h2><div class="empty-state">아직 기록이 없어요</div></div>`;
+// ---------- Detail screen ----------
+function findLogForDate(dateStr) {
+  return state.logs.find((l) => dateStr >= l.start_date && dateStr <= (l.end_date || l.start_date)) || null;
+}
+
+async function renderDetailScreen() {
+  const dateStr = state.selectedDate;
+  const isOwner = state.me.user.role === "owner";
+  const log = findLogForDate(dateStr);
+  const loveLogsForDate = state.loveLogs.filter((l) => l.date === dateStr);
+
+  appEl.innerHTML = `
+    <div class="detail-header">
+      <button data-action="close-detail" aria-label="뒤로">‹</button>
+      <div class="detail-date">${formatLong(dateStr)}</div>
+    </div>
+    ${renderDetailCycleSection(log, isOwner)}
+    ${renderDetailLoveSection(loveLogsForDate, isOwner)}
+  `;
+}
+
+function renderDetailCycleSection(log, isOwner) {
+  if (!log) {
+    return `
+      <div class="card">
+        <h2>📋 캘린더 기록</h2>
+        <div class="empty-state">이 날짜에 기록된 생리 기록이 없어요</div>
+      </div>
+    `;
   }
-  const items = state.logs
-    .map((log) => {
-      if (isOwner && state.editingLogId === log.id) {
-        return `
-          <form id="edit-log-form" data-id="${log.id}">
-            <div class="form-row">
-              <label>시작일</label>
-              <input type="date" name="start_date" value="${log.start_date}" required>
-            </div>
-            <div class="form-row">
-              <label>종료일</label>
-              <input type="date" name="end_date" value="${log.end_date || ""}">
-            </div>
-            <div class="form-row">
-              <label>메모</label>
-              <input type="text" name="note" value="${escapeHtml(log.note || "")}">
-            </div>
-            <div style="display:flex;gap:8px">
-              <button type="submit" class="btn">저장</button>
-              <button type="button" class="btn ghost" data-action="cancel-edit">취소</button>
-            </div>
-          </form>
-        `;
-      }
-      return `
-        <div class="log-item">
-          <div>
-            <div class="dates">${formatShort(log.start_date)} ${log.end_date ? "~ " + formatShort(log.end_date) : "(진행중)"}</div>
-            ${log.note ? `<div class="note">${escapeHtml(log.note)}</div>` : ""}
+
+  if (isOwner && state.editingLogId === log.id) {
+    return `
+      <div class="card">
+        <h2>📋 캘린더 기록</h2>
+        <form id="edit-log-form" data-id="${log.id}">
+          <div class="form-row">
+            <label>시작일</label>
+            <input type="date" name="start_date" value="${log.start_date}" required>
           </div>
+          <div class="form-row">
+            <label>종료일</label>
+            <input type="date" name="end_date" value="${log.end_date || ""}">
+          </div>
+          <div class="form-row">
+            <label>메모</label>
+            <input type="text" name="note" value="${escapeHtml(log.note || "")}">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="btn">저장</button>
+            <button type="button" class="btn ghost" data-action="cancel-edit">취소</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <h2>📋 캘린더 기록</h2>
+      <div class="log-item">
+        <div>
+          <div class="dates">${formatShort(log.start_date)} ${log.end_date ? "~ " + formatShort(log.end_date) : "(진행중)"}</div>
+          ${log.note ? `<div class="note">${escapeHtml(log.note)}</div>` : ""}
+        </div>
+        ${
+          isOwner
+            ? `
+          <div class="log-actions">
+            ${!log.end_date ? `<button data-action="quick-end" data-id="${log.id}">오늘 종료</button>` : ""}
+            <button data-action="edit-log" data-id="${log.id}">수정</button>
+            <button class="delete" data-action="delete-log" data-id="${log.id}">삭제</button>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderDetailLoveSection(loveLogsForDate, isOwner) {
+  const items = loveLogsForDate.length
+    ? loveLogsForDate
+        .map(
+          (l) => `
+        <div class="log-item">
+          <div class="note">${l.note ? escapeHtml(l.note) : "메모 없음"}</div>
           ${
             isOwner
-              ? `
-            <div class="log-actions">
-              ${!log.end_date ? `<button data-action="quick-end" data-id="${log.id}">오늘 종료</button>` : ""}
-              <button data-action="edit-log" data-id="${log.id}">수정</button>
-              <button class="delete" data-action="delete-log" data-id="${log.id}">삭제</button>
-            </div>
-          `
+              ? `<div class="log-actions"><button class="delete" data-action="delete-love-log" data-id="${l.id}">삭제</button></div>`
               : ""
           }
         </div>
-      `;
-    })
-    .join("");
+      `
+        )
+        .join("")
+    : `<div class="empty-state">이 날짜에 사랑기록이 없어요</div>`;
 
-  return `<div class="card"><h2>📋 기록</h2>${items}</div>`;
+  return `
+    <div class="card">
+      <h2>💜 사랑기록</h2>
+      ${items}
+      ${
+        isOwner
+          ? `
+        <form id="add-love-log-form" style="margin-top:${loveLogsForDate.length ? "12px" : "0"}">
+          <div class="form-row">
+            <label>메모 (선택)</label>
+            <input type="text" name="note" placeholder="오늘 있었던 일">
+          </div>
+          <button type="submit" class="btn block">사랑기록 추가</button>
+        </form>
+      `
+          : ""
+      }
+    </div>
+  `;
 }
 
 // ---------- Actions ----------
@@ -419,6 +495,16 @@ async function onAppClick(e) {
   }
   if (action === "delete-log") return handleDeleteLog(btn.dataset.id);
   if (action === "quick-end") return handleQuickEnd(btn.dataset.id);
+  if (action === "open-date") {
+    state.selectedDate = btn.dataset.date;
+    state.editingLogId = null;
+    return renderApp();
+  }
+  if (action === "close-detail") {
+    state.selectedDate = null;
+    return renderApp();
+  }
+  if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
 }
 
 async function onAppSubmit(e) {
@@ -427,6 +513,7 @@ async function onAppSubmit(e) {
   e.preventDefault();
   if (form.id === "add-log-form") return handleAddLog(form);
   if (form.id === "edit-log-form") return handleEditLog(form);
+  if (form.id === "add-love-log-form") return handleAddLoveLog(form);
 }
 
 async function handleAddLog(form) {
@@ -481,6 +568,34 @@ async function handleQuickEnd(id) {
     await renderApp();
   } catch {
     showToast("업데이트 실패");
+  }
+}
+
+async function handleAddLoveLog(form) {
+  const fd = new FormData(form);
+  const note = fd.get("note") || null;
+  try {
+    await api("/api/love-logs", {
+      method: "POST",
+      body: JSON.stringify({ date: state.selectedDate, note }),
+    });
+    await loadAppData();
+    showToast("사랑기록을 추가했어요");
+    await renderApp();
+  } catch {
+    showToast("추가 실패");
+  }
+}
+
+async function handleDeleteLoveLog(id) {
+  if (!confirm("이 사랑기록을 삭제할까요?")) return;
+  try {
+    await api(`/api/love-logs/${id}`, { method: "DELETE" });
+    await loadAppData();
+    showToast("삭제했어요");
+    await renderApp();
+  } catch {
+    showToast("삭제 실패");
   }
 }
 
@@ -599,6 +714,12 @@ function formatShort(dateStr) {
   if (!dateStr) return "-";
   const [, m, d] = dateStr.split("-");
   return `${Number(m)}월 ${Number(d)}일`;
+}
+
+function formatLong(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${Number(m)}월 ${Number(d)}일 ${WEEKDAYS[date.getDay()]}요일`;
 }
 
 function escapeHtml(str) {

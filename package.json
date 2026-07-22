@@ -8,6 +8,8 @@
     "dev": "wrangler pages dev . --compatibility-flag=nodejs_compat",
     "d1:migrate:local": "wrangler d1 execute period-tracker-db --local --file=./migrations/0001_init.sql",
     "d1:migrate:remote": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0001_init.sql",
+    "d1:migrate:local:love": "wrangler d1 execute period-tracker-db --local --file=./migrations/0002_love_logs.sql",
+    "d1:migrate:remote:love": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0002_love_logs.sql",
     "deploy": "wrangler pages deploy ."
   },
   "devDependencies": {
