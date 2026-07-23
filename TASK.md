@@ -29,7 +29,8 @@ Component Inventory에서 "8회 사용, 공통 Helper 없음"으로 보고했던
 ## Result
 
 ### Status
-✅ 리팩터링 완료, 로컬 검증까지만(배포 안 함, CHANGELOG.md 미수정).
+✅ 구현 완료, 로컬 커밋 및 push/배포 완료 (commit `48d4257`, Button Family 리팩터링과 함께 배포,
+CHANGELOG.md 갱신 포함). Cloudflare Pages Git 연동으로 자동 배포됨.
 
 ### 변경 파일
 `app.js`(+5줄, `renderSectionHeader()` 헬퍼 추가 + 12개 호출로 교체 + 1곳 클래스만 추가),
@@ -119,7 +120,8 @@ Button Family 조사에서 확인된 문제를 그대로 해소하는 작업: `.
 ## Result
 
 ### Status
-✅ 리팩터링 완료, 로컬 검증까지만(배포 안 함, CHANGELOG.md 미수정).
+✅ 구현 완료, 로컬 커밋 및 push/배포 완료 (commit `48d4257`, Section Header 리팩터링과 함께 배포,
+CHANGELOG.md 갱신 포함). Cloudflare Pages Git 연동으로 자동 배포됨.
 
 ### 변경 파일
 `style.css`(net -11줄), `app.js`(기존 17개 `<button>`에 class 속성만 추가, 줄 수 변화 없음)
