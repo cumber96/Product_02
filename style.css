@@ -65,6 +65,25 @@
   --space-base: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
+
+  --font-size-title: 20px;
+  --font-size-subtitle-lg: 18px;
+  --font-size-subtitle: 16px;
+  --font-size-body: 14px;
+  --font-size-caption: 13px;
+  --font-size-caption-sm: 12px;
+  --font-size-caption-xs: 11px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.25;
+  --line-height-relaxed: 1.5;
+
+  --tracking-tight: -0.18px;
 }
 
 * { box-sizing: border-box; }
@@ -111,17 +130,17 @@ body {
 }
 
 .login-screen h1 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.18px;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
   margin: 0;
   color: var(--ink);
 }
 
 .login-screen p {
   color: var(--muted);
-  font-size: 16px;
+  font-size: var(--font-size-subtitle);
   margin: 0;
 }
 
@@ -135,8 +154,8 @@ body {
   border: 1px solid var(--hairline);
   padding: var(--space-sm) var(--space-base);
   border-radius: var(--radius-full);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
 }
 
 .error-note {
@@ -144,7 +163,7 @@ body {
   color: var(--primary-error);
   padding: var(--space-sm) var(--space-base);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   max-width: 320px;
 }
 
@@ -169,18 +188,18 @@ body {
 }
 
 .topbar .name {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body);
   color: var(--ink);
 }
 
 .role-badge {
-  font-size: 11px;
+  font-size: var(--font-size-caption-xs);
   padding: 2px 10px;
   border-radius: var(--radius-full);
   background: var(--surface-strong);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: inline-block;
   margin-top: 2px;
 }
@@ -211,16 +230,16 @@ body {
 }
 
 .card h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-md);
   color: var(--ink);
 }
 
 .card p.hint {
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-relaxed);
   margin: 0;
 }
 
@@ -237,14 +256,14 @@ body {
 }
 
 .summary-item .label {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-size-caption-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
 }
 
 .summary-item .value {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
   margin-top: 2px;
   color: var(--ink);
 }
@@ -266,7 +285,7 @@ body {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border: 1px solid var(--hairline);
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   color: var(--muted);
   background: var(--surface-soft);
 }
@@ -282,9 +301,9 @@ button {
   border: none;
   padding: 14px 24px;
   border-radius: var(--radius-sm);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.25;
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
   cursor: pointer;
   height: 48px;
 }
@@ -336,8 +355,8 @@ button {
 }
 
 .detail-header .detail-date {
-  font-weight: 600;
-  font-size: 18px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-subtitle-lg);
   color: var(--ink);
 }
 
@@ -350,8 +369,8 @@ button {
 }
 
 .calendar-header .month-label {
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-subtitle);
   color: var(--ink);
 }
 
@@ -375,7 +394,7 @@ button {
 
 .weekday-row div {
   text-align: center;
-  font-size: 12px;
+  font-size: var(--font-size-caption-sm);
   color: var(--muted);
   padding-bottom: var(--space-sm);
 }
@@ -386,7 +405,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   color: var(--ink);
   cursor: pointer;
 }
@@ -448,7 +467,7 @@ button {
   flex-wrap: wrap;
   gap: var(--space-md);
   margin-top: var(--space-md);
-  font-size: 12px;
+  font-size: var(--font-size-caption-sm);
   color: var(--muted);
 }
 
@@ -480,8 +499,8 @@ button {
 }
 
 .form-row label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
 }
 
@@ -489,7 +508,7 @@ button {
   padding: var(--space-md);
   border-radius: var(--radius-sm);
   border: 1px solid var(--hairline);
-  font-size: 16px;
+  font-size: var(--font-size-subtitle);
   font-family: inherit;
   color: var(--ink);
   background: var(--canvas);
@@ -508,19 +527,19 @@ button {
   justify-content: space-between;
   padding: var(--space-md) 0;
   border-bottom: 1px solid var(--hairline-soft);
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .log-item:last-child { border-bottom: none; }
 
-.log-item .dates { font-weight: 600; color: var(--ink); }
-.log-item .note { color: var(--muted); font-size: 13px; }
+.log-item .dates { font-weight: var(--font-weight-semibold); color: var(--ink); }
+.log-item .note { color: var(--muted); font-size: var(--font-size-caption); }
 
 .log-actions button {
   border: none;
   background: transparent;
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
 }
@@ -532,7 +551,7 @@ button {
 .empty-state {
   text-align: center;
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   padding: var(--space-xl) 0;
 }
 
@@ -545,7 +564,7 @@ button {
   color: var(--on-primary);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   box-shadow: var(--shadow-1);
   z-index: 100;
 }
