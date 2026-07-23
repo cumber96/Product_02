@@ -11,6 +11,9 @@
 
 ### Changed
 
+- 예상 생리(Predicted Period) 표시 가시성 개선: 대비가 낮았던 `brand-200`(연한 핑크, 1.37:1) 대신
+  `brand-500`(진한 핑크, 3.52:1)을 재사용하고, 점선 테두리 + 옅은(12%) 배경 채움으로 실제 생리(solid fill)와
+  "색상"이 아닌 "강도" 차이로 구분되도록 변경
 - Color Token을 Primitive → Semantic 2단계 구조로 개편. 기존 `--primary`/`--luxe`/`--ink`/`--muted` 등 14개
   토큰을 `--color-text-*`/`--color-surface-*`/`--color-border-*`/`--color-accent-*`/`--color-danger-*`/
   `--color-period`/`--color-fertile`/`--color-ovulation` 등 Semantic Token으로 교체 (Component Token은

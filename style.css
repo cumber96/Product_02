@@ -72,7 +72,7 @@
   --color-danger-soft: var(--red-50);
 
   --color-period: var(--brand-500);
-  --color-period-predicted: var(--brand-200);
+  --color-period-predicted: var(--brand-500);
   --color-fertile: var(--purple-100);
   --color-ovulation: var(--purple-600);
 
@@ -456,6 +456,7 @@ button {
 }
 
 .day-cell.predicted .num {
+  background: color-mix(in srgb, var(--color-period-predicted) 12%, transparent);
   border: 1.5px dashed var(--color-period-predicted);
   width: 28px;
   height: 28px;
