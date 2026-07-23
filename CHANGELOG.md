@@ -11,6 +11,14 @@
 
 ### Changed
 
+- Color Token을 Primitive → Semantic 2단계 구조로 개편. 기존 `--primary`/`--luxe`/`--ink`/`--muted` 등 14개
+  토큰을 `--color-text-*`/`--color-surface-*`/`--color-border-*`/`--color-accent-*`/`--color-danger-*`/
+  `--color-period`/`--color-fertile`/`--color-ovulation` 등 Semantic Token으로 교체 (Component Token은
+  도입하지 않음)
+- Primary Button 기본 배경을 `#ff385c` → `#e00b41`로 변경. 흰 텍스트 대비가 3.52:1(WCAG AA 미달) →
+  4.89:1(AA 충족)로 개선됨
+- Calendar 예상 생리(predicted) 마킹 점선/범례 색을 연한 핑크(`#ffd1da`)로 변경
+- Viewer 배지 색상을 보라색에서 Owner 배지와 동일한 뉴트럴 회색으로 변경 (역할 구분은 텍스트로만 표시)
 - 기본 폰트를 Pretendard로 적용 (셀프 호스팅 woff2 subset, `/fonts`). 기존에도 이름은 있었으나 실제로는 로드되지 않던 상태였음
 - font-size/font-weight/line-height/letter-spacing을 `:root`의 Typography Primitive Token(`--font-size-*`, `--font-weight-*`, `--line-height-*`, `--tracking-tight`)으로 토큰화. 기존 값 그대로 재사용해 화면상 변화는 없음
 - 전체 아이콘을 이모지/문자(⚙️🔔💌📊✍️📋💜‹›)에서 Lucide 기반 SVG 아이콘으로 교체, `icons.js`에서 중앙 관리
@@ -29,6 +37,9 @@
 ### Removed
 
 - `style.css`에서 사용되지 않던 Color Token 3개 제거 (`--body-text`, `--muted-soft`, `--border-strong`)
+- Color Token 구조 개편으로 기존 토큰 14개 제거 (`--primary`, `--primary-active`, `--primary-disabled`,
+  `--primary-error`, `--luxe`, `--luxe-soft`, `--ink`, `--muted`, `--hairline`, `--hairline-soft`, `--canvas`,
+  `--surface-soft`, `--surface-strong`, `--on-primary`)
 
 ---
 

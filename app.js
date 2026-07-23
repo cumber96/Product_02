@@ -167,7 +167,7 @@ async function renderApp() {
         ${
           user.picture
             ? `<img class="avatar" src="${user.picture}" alt="">`
-            : `<div class="avatar" style="background:var(--primary-disabled);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary)">${escapeHtml(
+            : `<div class="avatar" style="background:var(--color-accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--color-accent)">${escapeHtml(
                 (user.name || "?")[0]
               )}</div>`
         }
@@ -251,7 +251,7 @@ function renderInviteCard(partnerConnected) {
             <input id="invite-url-input" readonly value="${escapeHtml(result.url)}">
             <button class="btn secondary" data-action="copy-invite">복사</button>
           </div>
-          <div style="font-size:12px;color:var(--muted)">코드: ${escapeHtml(result.code)} · 7일간 유효</div>
+          <div style="font-size:12px;color:var(--color-text-secondary)">코드: ${escapeHtml(result.code)} · 7일간 유효</div>
         </div>
       `
           : `<button class="btn" data-action="create-invite">초대 링크 만들기</button>`
@@ -271,7 +271,7 @@ function renderSummaryCard() {
     return `
       <div class="card">
         <h2>${Sparkles()} 예측 정보</h2>
-        <p style="font-size:13px;color:var(--muted);margin:0">아직 기록이 없어요. 첫 생리 시작일을 기록하면 예측이 시작돼요.</p>
+        <p style="font-size:13px;color:var(--color-text-secondary);margin:0">아직 기록이 없어요. 첫 생리 시작일을 기록하면 예측이 시작돼요.</p>
       </div>
     `;
   }

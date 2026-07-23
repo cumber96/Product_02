@@ -31,20 +31,50 @@
 }
 
 :root {
-  --primary: #ff385c;
-  --primary-active: #e00b41;
-  --primary-disabled: #ffd1da;
-  --primary-error: #c13515;
-  --luxe: #460479;
-  --luxe-soft: #f3ebfa;
-  --ink: #222222;
-  --muted: #6a6a6a;
-  --hairline: #dddddd;
-  --hairline-soft: #ebebeb;
-  --canvas: #ffffff;
-  --surface-soft: #f7f7f7;
-  --surface-strong: #f2f2f2;
-  --on-primary: #ffffff;
+  /* Primitive */
+  --brand-200: #ffd1da;
+  --brand-500: #ff385c;
+  --brand-600: #e00b41;
+
+  --neutral-0: #ffffff;
+  --neutral-50: #f7f7f7;
+  --neutral-100: #ebebeb;
+  --neutral-200: #dddddd;
+  --neutral-600: #6a6a6a;
+  --neutral-900: #222222;
+
+  --red-50: #fdeceb;
+  --red-600: #c13515;
+
+  --purple-100: #f3ebfa;
+  --purple-600: #460479;
+
+  /* Semantic */
+  --color-text-primary: var(--neutral-900);
+  --color-text-secondary: var(--neutral-600);
+  --color-text-inverse: var(--neutral-0);
+
+  --color-canvas: var(--neutral-0);
+  --color-surface: var(--neutral-0);
+  --color-surface-soft: var(--neutral-50);
+  --color-surface-strong: var(--neutral-100);
+
+  --color-border-default: var(--neutral-200);
+  --color-border-soft: var(--neutral-100);
+  --color-border-strong: var(--neutral-900);
+
+  --color-accent: var(--brand-500);
+  --color-accent-strong: var(--brand-600);
+  --color-accent-soft: var(--brand-200);
+  --color-on-accent: var(--neutral-0);
+
+  --color-danger: var(--red-600);
+  --color-danger-soft: var(--red-50);
+
+  --color-period: var(--brand-500);
+  --color-period-predicted: var(--brand-200);
+  --color-fertile: var(--purple-100);
+  --color-ovulation: var(--purple-600);
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -95,8 +125,8 @@
 body {
   margin: 0;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
-  background: var(--canvas);
-  color: var(--ink);
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
   min-height: 100vh;
 }
 
@@ -112,7 +142,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 60vh;
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 /* --- Login --- */
@@ -132,11 +162,11 @@ body {
   line-height: var(--line-height-tight);
   letter-spacing: var(--tracking-tight);
   margin: 0;
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 .login-screen p {
-  color: var(--muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-subtitle);
   margin: 0;
 }
@@ -146,9 +176,9 @@ body {
 }
 
 .invite-note {
-  background: var(--surface-soft);
-  color: var(--ink);
-  border: 1px solid var(--hairline);
+  background: var(--color-surface-soft);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
   padding: var(--space-sm) var(--space-base);
   border-radius: var(--radius-full);
   font-size: var(--font-size-caption);
@@ -156,8 +186,8 @@ body {
 }
 
 .error-note {
-  background: #fdeceb;
-  color: var(--primary-error);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
   padding: var(--space-sm) var(--space-base);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-caption);
@@ -187,29 +217,29 @@ body {
 .topbar .name {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-body);
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 .role-badge {
   font-size: var(--font-size-caption-xs);
   padding: 2px 10px;
   border-radius: var(--radius-full);
-  background: var(--surface-strong);
-  color: var(--ink);
+  background: var(--color-surface-strong);
+  color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
   display: inline-block;
   margin-top: 2px;
 }
 
 .role-badge.viewer {
-  background: var(--luxe-soft);
-  color: var(--luxe);
+  background: var(--color-surface-strong);
+  color: var(--color-text-primary);
 }
 
 .icon-btn {
   border: none;
   background: transparent;
-  color: var(--ink);
+  color: var(--color-text-primary);
   cursor: pointer;
   padding: 6px;
   display: inline-flex;
@@ -219,8 +249,8 @@ body {
 
 /* --- Card --- */
 .card {
-  background: var(--canvas);
-  border: 1px solid var(--hairline);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   padding: var(--space-base);
   margin-bottom: var(--space-md);
@@ -230,11 +260,11 @@ body {
   font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-md);
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 .card p.hint {
-  color: var(--muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-relaxed);
   margin: 0;
@@ -247,7 +277,7 @@ body {
 }
 
 .summary-item {
-  background: var(--surface-soft);
+  background: var(--color-surface-soft);
   border-radius: var(--radius-sm);
   padding: var(--space-md);
 }
@@ -255,14 +285,14 @@ body {
 .summary-item .label {
   font-size: var(--font-size-caption-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .summary-item .value {
   font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-bold);
   margin-top: 2px;
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 /* --- Invite --- */
@@ -281,10 +311,10 @@ body {
   flex: 1;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--color-border-default);
   font-size: var(--font-size-caption);
-  color: var(--muted);
-  background: var(--surface-soft);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-soft);
 }
 
 /* --- Buttons --- */
@@ -293,8 +323,8 @@ button {
 }
 
 .btn {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--color-accent-strong);
+  color: var(--color-on-accent);
   border: none;
   padding: 14px 24px;
   border-radius: var(--radius-sm);
@@ -305,19 +335,19 @@ button {
   height: 48px;
 }
 
-.btn:active { background: var(--primary-active); }
+.btn:active { filter: brightness(0.9); }
 
 .btn.secondary {
-  background: var(--canvas);
-  color: var(--ink);
-  border: 1px solid var(--ink);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-strong);
   padding: 13px 23px;
 }
 
 .btn.ghost {
   background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--hairline);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
   padding: 13px 23px;
   height: auto;
 }
@@ -325,8 +355,8 @@ button {
 .btn.block { width: 100%; }
 
 .btn:disabled {
-  background: var(--primary-disabled);
-  color: var(--on-primary);
+  background: var(--color-accent-soft);
+  color: var(--color-on-accent);
   cursor: not-allowed;
 }
 
@@ -339,13 +369,13 @@ button {
 }
 
 .detail-header button {
-  background: var(--surface-strong);
+  background: var(--color-surface-strong);
   border: none;
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
   cursor: pointer;
-  color: var(--ink);
+  color: var(--color-text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -354,7 +384,7 @@ button {
 .detail-header .detail-date {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-subtitle-lg);
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 /* --- Calendar --- */
@@ -368,17 +398,17 @@ button {
 .calendar-header .month-label {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-subtitle);
-  color: var(--ink);
+  color: var(--color-text-primary);
 }
 
 .calendar-header button {
-  background: var(--surface-strong);
+  background: var(--color-surface-strong);
   border: none;
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
   cursor: pointer;
-  color: var(--ink);
+  color: var(--color-text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -392,7 +422,7 @@ button {
 .weekday-row div {
   text-align: center;
   font-size: var(--font-size-caption-sm);
-  color: var(--muted);
+  color: var(--color-text-secondary);
   padding-bottom: var(--space-sm);
 }
 
@@ -403,7 +433,7 @@ button {
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-caption);
-  color: var(--ink);
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
@@ -415,8 +445,8 @@ button {
 }
 
 .day-cell.period .num {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--color-period);
+  color: var(--color-on-accent);
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
@@ -426,7 +456,7 @@ button {
 }
 
 .day-cell.predicted .num {
-  border: 1.5px dashed var(--primary);
+  border: 1.5px dashed var(--color-period-predicted);
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
@@ -435,7 +465,7 @@ button {
   justify-content: center;
 }
 
-.day-cell.fertile { background: var(--luxe-soft); border-radius: var(--radius-xs); }
+.day-cell.fertile { background: var(--color-fertile); border-radius: var(--radius-xs); }
 
 .day-cell.ovulation::after {
   content: "";
@@ -446,11 +476,11 @@ button {
   width: 5px;
   height: 5px;
   border-radius: var(--radius-full);
-  background: var(--luxe);
+  background: var(--color-ovulation);
 }
 
 .day-cell.today .num {
-  box-shadow: inset 0 0 0 1.5px var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--color-border-strong);
   border-radius: var(--radius-full);
   width: 28px;
   height: 28px;
@@ -465,24 +495,27 @@ button {
   gap: var(--space-md);
   margin-top: var(--space-md);
   font-size: var(--font-size-caption-sm);
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .legend span { display: inline-flex; align-items: center; gap: var(--space-xs); }
 
 /* 범례 아이콘 색상 — 기존 dot 마킹의 색상 의미를 그대로 유지 */
-.legend-period .icon,
+.legend-period .icon {
+  color: var(--color-period);
+}
+
 .legend-predicted .icon {
-  color: var(--primary);
+  color: var(--color-period-predicted);
 }
 
 .legend-ovulation .icon {
-  color: var(--luxe);
+  color: var(--color-ovulation);
 }
 
 .legend-fertile .icon {
-  color: var(--luxe);
-  background: var(--luxe-soft);
+  color: var(--color-ovulation);
+  background: var(--color-fertile);
   border-radius: var(--radius-full);
   padding: 2px;
 }
@@ -498,22 +531,22 @@ button {
 .form-row label {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .form-row input, .form-row textarea {
   padding: var(--space-md);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--color-border-default);
   font-size: var(--font-size-subtitle);
   font-family: inherit;
-  color: var(--ink);
-  background: var(--canvas);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
 }
 
 .form-row input:focus, .form-row textarea:focus {
   outline: none;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-border-strong);
   padding: 11px;
 }
 
@@ -523,19 +556,19 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--hairline-soft);
+  border-bottom: 1px solid var(--color-border-soft);
   font-size: var(--font-size-body);
 }
 
 .log-item:last-child { border-bottom: none; }
 
-.log-item .dates { font-weight: var(--font-weight-semibold); color: var(--ink); }
-.log-item .note { color: var(--muted); font-size: var(--font-size-caption); }
+.log-item .dates { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+.log-item .note { color: var(--color-text-secondary); font-size: var(--font-size-caption); }
 
 .log-actions button {
   border: none;
   background: transparent;
-  color: var(--ink);
+  color: var(--color-text-primary);
   font-size: var(--font-size-caption);
   cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
@@ -543,11 +576,11 @@ button {
 
 .log-actions button:hover { text-decoration: underline; }
 
-.log-actions button.delete { color: var(--primary-error); }
+.log-actions button.delete { color: var(--color-danger); }
 
 .empty-state {
   text-align: center;
-  color: var(--muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-body);
   padding: var(--space-xl) 0;
 }
@@ -557,8 +590,8 @@ button {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--ink);
-  color: var(--on-primary);
+  background: var(--color-text-primary);
+  color: var(--color-text-inverse);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-full);
   font-size: var(--font-size-caption);
