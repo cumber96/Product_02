@@ -287,13 +287,14 @@ body {
   margin: 0;
 }
 
-/* --- Prediction Carousel --- */
+/* --- Prediction Horizontal Card Carousel --- */
 .prediction {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .prediction-track {
   display: flex;
+  gap: var(--space-sm);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -302,24 +303,28 @@ body {
 .prediction-track::-webkit-scrollbar { display: none; }
 
 .prediction-slide {
-  flex: 0 0 100%;
-  scroll-snap-align: center;
+  flex: 0 0 46%;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xl) var(--space-lg);
-  border-radius: var(--radius-lg);
-  text-align: center;
+  gap: 2px;
+  padding: var(--space-md) var(--space-base);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
 }
 
-.prediction-slide.tone-period {
-  background: color-mix(in srgb, var(--color-period) 8%, var(--color-surface-soft));
+.prediction-slide.tone-period { background: color-mix(in srgb, var(--color-period) 10%, var(--color-surface-soft)); }
+.prediction-slide.tone-ovulation { background: color-mix(in srgb, var(--color-ovulation) 10%, var(--color-surface-soft)); }
+.prediction-slide.tone-fertile { background: color-mix(in srgb, var(--color-fertile) 60%, var(--color-surface-soft)); }
+
+.prediction-icon {
+  display: inline-flex;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text-secondary);
 }
 
-.prediction-slide.tone-ovulation {
-  background: color-mix(in srgb, var(--color-ovulation) 8%, var(--color-surface-soft));
-}
+.prediction-slide.tone-period .prediction-icon { color: var(--color-period); }
+.prediction-slide.tone-ovulation .prediction-icon { color: var(--color-ovulation); }
 
 .prediction-slide .label {
   font-size: var(--font-size-caption);
@@ -327,21 +332,13 @@ body {
   color: var(--color-text-secondary);
 }
 
-.prediction-slide .dday {
-  font-size: var(--font-size-title);
+.prediction-slide .relative {
+  font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-bold);
-}
-
-.prediction-slide.tone-period .dday { color: var(--color-period); }
-.prediction-slide.tone-ovulation .dday { color: var(--color-ovulation); }
-
-.prediction-slide .date {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
-.prediction-slide .sub {
+.prediction-slide .date {
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
 }
@@ -351,24 +348,6 @@ body {
   text-align: center;
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
-}
-
-.prediction-dots {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.prediction-dots .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: var(--color-border-default);
-}
-
-.prediction-dots .dot.active {
-  background: var(--color-accent);
 }
 
 /* --- Invite --- */
@@ -465,10 +444,17 @@ button {
   margin-bottom: var(--space-md);
 }
 
+/* 월 이동 버튼은 여기서만 44px 터치 영역 확보(아이콘 자체 크기는 키우지 않음) */
+.calendar-header .icon-btn.header {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .calendar-header .month-label {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-subtitle);
   color: var(--color-text-primary);
+  letter-spacing: 0.02em;
 }
 
 .weekday-row, .calendar-grid {
@@ -479,94 +465,111 @@ button {
 .weekday-row div {
   text-align: center;
   font-size: var(--font-size-caption-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   padding-bottom: var(--space-sm);
+}
+
+/* 일요일: 위험색이 아닌 Accent로만 구분(SAT는 중립 유지) */
+.weekday-row div:first-child {
+  color: var(--color-accent);
 }
 
 .day-cell {
   position: relative;
   aspect-ratio: 1 / 1;
   display: flex;
-  align-items: center;
   justify-content: center;
+  padding-top: 4px;
   font-size: var(--font-size-caption);
   color: var(--color-text-primary);
   cursor: pointer;
+  border: 1px solid var(--color-border-soft);
 }
 
-.day-cell.empty { visibility: hidden; cursor: default; }
+.day-cell.empty { cursor: default; }
 
 .day-cell .num {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.day-cell.period .num {
+/* 배경(생리기간) — Period Semantic Color, 인접 날짜와 이어지는 연속 배경 */
+.day-cell.period {
   background: var(--color-period);
-  color: var(--color-on-accent);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--radius-xs);
 }
 
-.day-cell.predicted .num {
-  background: color-mix(in srgb, var(--color-period-predicted) 12%, transparent);
-  border: 1.5px dashed var(--color-period-predicted);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.day-cell.period .num { color: var(--color-on-accent); }
+.day-cell.period .cell-marker.record { background: var(--color-on-accent); }
+.day-cell.period .cell-marker.love { color: var(--color-on-accent); }
+.day-cell.period.today::before { background: var(--color-on-accent); }
+
+.day-cell.period.period-connect-prev { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.day-cell.period.period-connect-next { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+
+/* 배경(예상 생리기간) — 실제 생리기간보다 약한 Tint + 점선 테두리로 "예측"임을 구분 */
+.day-cell.predicted {
+  background: color-mix(in srgb, var(--color-period-predicted) 16%, transparent);
+  border: 1px dashed var(--color-period-predicted);
+  border-radius: var(--radius-xs);
 }
 
-.day-cell.fertile { background: var(--color-fertile); border-radius: var(--radius-xs); }
+/* 하단 Band(가임기) — Fertile Semantic Color, 인접 날짜와 이어지는 연속 Band */
+.day-cell.fertile::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-fertile);
+}
 
+/* 하단 Band(배란일) — 가임기 Band보다 진한 단일 강조. fertile::after보다 뒤에 와야
+   같은 날짜에 둘 다 해당할 때(배란일은 가임기 구간에 포함) 배란일이 우선 표시됨 */
 .day-cell.ovulation::after {
   content: "";
   position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
   background: var(--color-ovulation);
 }
 
+/* 오늘 — 날짜 숫자 근처의 작은 점(선택 Ring과 다른 표현) */
 .day-cell.today::before {
   content: "";
   position: absolute;
-  top: 2px;
+  top: 22px;
   left: 50%;
   transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: var(--radius-full);
   background: var(--color-text-secondary);
 }
 
+/* 선택한 날짜 — Accent Outline/Ring, 셀 배경은 채우지 않음 */
 .day-cell.selected .num {
   box-shadow: inset 0 0 0 1.5px var(--color-accent);
   border-radius: var(--radius-full);
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 22px;
+  height: 22px;
 }
 
-/* 사랑기록 / 캘린더 기록(메모) 마커 — day-cell::before/::after는 오늘/배란일이 이미 사용 중이라
-   별도 <span class="cell-marker">로 렌더링 */
+/* 사랑기록 / 캘린더 기록(메모) 마커 — day-cell::before/::after는 오늘/가임기·배란일이 이미 쓰고 있어
+   별도 <span class="cell-marker">로 렌더링. 서로 다른 위치·형태로 구분 */
 .cell-marker {
   position: absolute;
+  top: 2px;
 }
 
 .cell-marker.record {
-  bottom: 2px;
   left: 2px;
   width: 7px;
   height: 7px;
@@ -574,67 +577,67 @@ button {
   background: var(--color-text-primary);
 }
 
-/* 순수 CSS로 그린 하트(원 2개 + 45도 회전 정사각형) — Lucide 아이콘이 아닌 도형이라
-   DESIGN.md 5장 "셀 안 마킹은 아이콘으로 바꾸지 않는다" 원칙을 그대로 지킨다 */
 .cell-marker.love {
-  top: 4px;
   right: 2px;
-  width: 6px;
-  height: 6px;
-  background: var(--color-text-primary);
-  transform: rotate(-45deg);
+  display: inline-flex;
+  color: var(--color-text-primary);
 }
-
-.cell-marker.love::before,
-.cell-marker.love::after {
-  content: "";
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-text-primary);
-}
-
-.cell-marker.love::before { top: -3px; left: 0; }
-.cell-marker.love::after { top: 0; left: 3px; }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-md);
+  gap: var(--space-sm) var(--space-md);
   margin-top: var(--space-md);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
   font-size: var(--font-size-caption-sm);
   color: var(--color-text-secondary);
 }
 
-.legend span { display: inline-flex; align-items: center; gap: var(--space-xs); }
+.legend-item .icon { color: var(--color-text-primary); }
 
-/* 범례 아이콘 색상 — 기존 dot 마킹의 색상 의미를 그대로 유지 */
-.legend-period .icon {
-  color: var(--color-period);
+/* Legend 심볼 — Calendar 안에서 실제 쓰는 모양(배경 박스/점선 박스/Band/점)과 동일하게 */
+.legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
 }
 
-.legend-predicted .icon {
-  color: var(--color-period-predicted);
+.swatch-period { background: var(--color-period); }
+
+.swatch-predicted {
+  background: color-mix(in srgb, var(--color-period-predicted) 16%, transparent);
+  border: 1px dashed var(--color-period-predicted);
 }
 
-.legend-ovulation .icon {
-  color: var(--color-ovulation);
-}
-
-.legend-fertile .icon {
-  color: var(--color-ovulation);
-  background: var(--color-fertile);
+.swatch-fertile {
+  width: 12px;
+  height: 4px;
   border-radius: var(--radius-full);
-  padding: 2px;
+  background: var(--color-fertile);
+  align-self: center;
 }
 
-.legend-love .icon {
-  color: var(--color-text-primary);
+.swatch-ovulation {
+  width: 12px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-ovulation);
+  align-self: center;
 }
 
-.legend-record .icon {
-  color: var(--color-text-primary);
+.swatch-record {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-primary);
+  align-self: center;
 }
 
 /* --- Selected Date Detail --- */

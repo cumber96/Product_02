@@ -10,7 +10,6 @@ import {
   NotebookText,
   Heart,
   Droplet,
-  CircleDashed,
   Circle,
   Egg,
   User,
@@ -174,8 +173,6 @@ async function renderApp() {
     ${renderSelectedDateDetail()}
     ${renderSheet()}
   `;
-
-  setupPredictionCarousel();
 }
 
 // ---------- Settings screen ----------
@@ -282,7 +279,7 @@ function renderPartnerCard(partner) {
   return `<div class="card"><h2 class="section-header">아직 연결된 사용자가 없어요</h2></div>`;
 }
 
-// ---------- Prediction Hero Carousel ----------
+// ---------- Prediction Horizontal Card Carousel ----------
 function renderPredictionCarousel() {
   const p = state.prediction;
   if (!p || !p.hasData) {
@@ -293,59 +290,48 @@ function renderPredictionCarousel() {
     `;
   }
 
-  const slides = [
+  const cards = [
     {
       tone: "period",
-      label: "생리 예정",
-      dday: formatDday(p.nextPredictedStart),
-      date: formatShortWithWeekday(p.nextPredictedStart),
+      icon: Droplet({ size: 16 }),
+      label: "생리 예정일",
+      relative: formatRelativeDays(p.nextPredictedStart),
+      date: formatDotWithWeekday(p.nextPredictedStart),
     },
     {
       tone: "ovulation",
-      label: "배란 예정",
-      dday: formatDday(p.ovulationDate),
-      date: formatShortWithWeekday(p.ovulationDate),
+      icon: Egg({ size: 16 }),
+      label: "배란 예정일",
+      relative: formatRelativeDays(p.ovulationDate),
+      date: formatDotWithWeekday(p.ovulationDate),
     },
     {
-      tone: "ovulation",
+      tone: "fertile",
+      icon: Circle({ size: 16 }),
       label: "가임기",
-      dday: formatDday(p.fertileWindowStart),
-      date: formatShortWithWeekday(p.fertileWindowStart),
-      sub: `~ ${formatShort(p.fertileWindowEnd)}까지`,
+      relative: formatRelativeDays(p.fertileWindowStart),
+      date: `${formatDot(p.fertileWindowStart)}부터`,
     },
   ];
 
   return `
     <div class="prediction">
       <div class="prediction-track" tabindex="0" aria-label="예측 정보, 좌우로 넘겨보세요">
-        ${slides
+        ${cards
           .map(
-            (s) => `
-          <div class="prediction-slide tone-${s.tone}">
-            <div class="label">${s.label}</div>
-            <div class="dday">${s.dday}</div>
-            <div class="date">${s.date}</div>
-            ${s.sub ? `<div class="sub">${s.sub}</div>` : ""}
+            (c) => `
+          <div class="prediction-slide tone-${c.tone}">
+            <div class="prediction-icon">${c.icon}</div>
+            <div class="label">${c.label}</div>
+            <div class="relative">${c.relative}</div>
+            <div class="date">${c.date}</div>
           </div>
         `
           )
           .join("")}
       </div>
-      <div class="prediction-dots">
-        ${slides.map((_, i) => `<span class="dot${i === 0 ? " active" : ""}"></span>`).join("")}
-      </div>
     </div>
   `;
-}
-
-function setupPredictionCarousel() {
-  const track = document.querySelector(".prediction-track");
-  const dots = document.querySelectorAll(".prediction-dots .dot");
-  if (!track || !dots.length) return;
-  track.addEventListener("scroll", () => {
-    const index = Math.min(Math.round(track.scrollLeft / track.clientWidth), dots.length - 1);
-    dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
-  });
 }
 
 // ---------- Calendar ----------
@@ -353,29 +339,38 @@ function renderCalendarCard() {
   const year = state.currentMonth.getFullYear();
   const month = state.currentMonth.getMonth();
   const cells = buildCalendarCells(year, month);
+  const monthLabel = `${year}.${String(month + 1).padStart(2, "0")}`;
 
   return `
     <div class="card">
       <div class="calendar-header">
-        <button class="icon-btn header" data-action="prev-month" aria-label="이전 달">${ChevronLeft()}</button>
-        <div class="month-label">${year}년 ${month + 1}월</div>
-        <button class="icon-btn header" data-action="next-month" aria-label="다음 달">${ChevronRight()}</button>
+        <button class="icon-btn header" data-action="prev-month" aria-label="이전 달">${ChevronLeft({ size: 18 })}</button>
+        <div class="month-label">${monthLabel}</div>
+        <button class="icon-btn header" data-action="next-month" aria-label="다음 달">${ChevronRight({ size: 18 })}</button>
       </div>
       <div class="weekday-row">${WEEKDAYS.map((w) => `<div>${w}</div>`).join("")}</div>
       <div class="calendar-grid">${cells.map(renderDayCell).join("")}</div>
       <div class="legend">
-        <span class="legend-period">${Droplet({ size: 16 })}생리기간</span>
-        <span class="legend-predicted">${CircleDashed({ size: 16 })}예상 생리</span>
-        <span class="legend-fertile">${Circle({ size: 16 })}가임기</span>
-        <span class="legend-ovulation">${Egg({ size: 16 })}배란일</span>
-        <span class="legend-love">${Heart({ size: 16 })}사랑기록</span>
-        <span class="legend-record">${NotebookText({ size: 16 })}캘린더 기록</span>
+        <span class="legend-item"><span class="legend-swatch swatch-period"></span>생리기간</span>
+        <span class="legend-item"><span class="legend-swatch swatch-predicted"></span>예상 생리기간</span>
+        <span class="legend-item"><span class="legend-swatch swatch-fertile"></span>가임기</span>
+        <span class="legend-item"><span class="legend-swatch swatch-ovulation"></span>배란일</span>
+        <span class="legend-item">${Heart({ size: 14 })}사랑기록</span>
+        <span class="legend-item"><span class="legend-swatch swatch-record"></span>캘린더 기록</span>
       </div>
     </div>
   `;
 }
 
-function renderDayCell(cell) {
+// 같은 상태(key)가 이웃 셀에도 있으면 배경/Band가 이어져 보이도록 — 주가 바뀌는 지점(같은 행이 아닐 때)은 연결하지 않음
+function isRangeConnected(cells, index, key, dir) {
+  const neighborIndex = index + dir;
+  if (Math.floor(neighborIndex / 7) !== Math.floor(index / 7)) return false;
+  const neighbor = cells[neighborIndex];
+  return !!(neighbor && neighbor[key]);
+}
+
+function renderDayCell(cell, index, cells) {
   if (!cell) return `<div class="day-cell empty"></div>`;
   const classes = ["day-cell"];
   if (cell.period) classes.push("period");
@@ -384,10 +379,18 @@ function renderDayCell(cell) {
   if (cell.ovulation) classes.push("ovulation");
   if (cell.today) classes.push("today");
   if (cell.selected) classes.push("selected");
+
+  ["period", "fertile"].forEach((key) => {
+    if (!cell[key]) return;
+    if (isRangeConnected(cells, index, key, -1)) classes.push(`${key}-connect-prev`);
+    if (isRangeConnected(cells, index, key, 1)) classes.push(`${key}-connect-next`);
+  });
+
   const markers =
-    (cell.love ? `<span class="cell-marker love"></span>` : "") +
+    (cell.love ? `<span class="cell-marker love">${Heart({ size: 11 })}</span>` : "") +
     (cell.hasNote ? `<span class="cell-marker record"></span>` : "");
-  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}"><span class="num">${cell.day}</span>${markers}</div>`;
+
+  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}" role="gridcell" aria-selected="${cell.selected}" aria-label="${cell.day}일"><span class="num">${cell.day}</span>${markers}</div>`;
 }
 
 // 생리/예상/가임기/배란/사랑기록/메모 여부를 하루 단위로 판정 — 캘린더 그리드와 Selected Date Detail이 동일 로직을 공유
@@ -839,23 +842,28 @@ function diffDaysFromToday(dateStr) {
   return Math.round((parseYmd(dateStr) - parseYmd(ymd(new Date()))) / 86400000);
 }
 
-function formatDday(dateStr) {
+function formatRelativeDays(dateStr) {
   if (!dateStr) return "-";
   const diff = diffDaysFromToday(dateStr);
-  if (diff === 0) return "D-Day";
-  return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+  if (diff === 0) return "오늘";
+  return diff > 0 ? `${diff}일 뒤` : `${Math.abs(diff)}일 지남`;
+}
+
+function formatDot(dateStr) {
+  if (!dateStr) return "-";
+  const [, m, d] = dateStr.split("-");
+  return `${Number(m)}.${Number(d)}`;
+}
+
+function formatDotWithWeekday(dateStr) {
+  if (!dateStr) return "-";
+  return `${formatDot(dateStr)} (${WEEKDAYS[parseYmd(dateStr).getDay()]})`;
 }
 
 function formatShort(dateStr) {
   if (!dateStr) return "-";
   const [, m, d] = dateStr.split("-");
   return `${Number(m)}월 ${Number(d)}일`;
-}
-
-function formatShortWithWeekday(dateStr) {
-  if (!dateStr) return "-";
-  const [, m, d] = dateStr.split("-");
-  return `${Number(m)}월 ${Number(d)}일 (${WEEKDAYS[parseYmd(dateStr).getDay()]})`;
 }
 
 function formatLong(dateStr) {

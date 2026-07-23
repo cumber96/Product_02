@@ -1,7 +1,153 @@
 # Current Task
 
 ## Goal
-직전 Home 개편(카드 재배치 수준)을 한 단계 더 밀어붙여 Home을 처음부터 새로 디자인한다: Prediction을
+현재 배포된 Home의 Prediction 영역과 Calendar 영역만 시각 디자인/레이아웃을 재작업한다. 데이터, 계산
+로직, 상태 관리 방식, Selected Date Detail, Settings는 전부 그대로 유지 — DOM 구조와 CSS만 필요한
+범위에서 변경. 배포는 사용자가 별도 확인 후 요청. **CHANGELOG.md는 이번엔 수정하지 않음.**
+
+## Background
+직전 Sprint에서 만든 Prediction Hero Carousel(카드 1개가 화면 전체, 페이지 인디케이터)과 Calendar 마커
+디자인을 실사용 검토 후 다시 조정하는 요청. Prediction은 Horizontal Card Carousel(카드 여러 개가 가로로
+이어지고 다음 카드가 일부 보임)로, Calendar는 셀 경계가 분명한 Grid + 날짜 상태별로 겹치지 않는 표현
+(배경/하단 Band/아이콘/Dot/Outline/점)으로 재설계.
+
+## Scope
+- **Prediction**: 100% 폭 Hero Carousel → 카드 여러 개가 가로로 이어지는 Carousel(카드 폭 ~46%, 모바일
+  기준 1.8~2.2장 노출). Hero형 큰 D-day, 페이지 인디케이터 제거. 카드 내용: 아이콘 + 예측명 + 상대
+  날짜("N일 뒤") + 실제 날짜("M.D (요일)" 또는 가임기는 "M.D부터"). 세로 높이 축소
+- **Calendar**: 헤더를 "‹ YYYY.MM ›" 형식으로, 요일 행에 일요일만 위험색이 아닌 Accent로 구분, 날짜
+  Grid에 셀 경계(얇은 border)와 상단 정렬 숫자, 날짜 상태 7~8종(오늘/선택/생리기간/예상생리기간/가임기/
+  배란일/사랑기록/캘린더기록)을 서로 다른 위치·형태로 표현(배경, 하단 Band, 아이콘, Dot, Outline, 점).
+  생리기간/예상생리기간/가임기는 인접 날짜 간 배경·Band가 시각적으로 이어지도록(주 경계에서는 자연스럽게
+  끊음). Legend 심볼을 실제 Calendar 마커 모양과 동일하게(단일 원형 dot 통일 금지)
+- **DESIGN.md §5와의 충돌 확인 필요**: 사랑기록 마커를 이번엔 실제 Lucide Heart 아이콘으로(직전엔 CSS
+  도형으로 우회 구현했었음) — DESIGN.md §5 "셀 안 마킹은 아이콘으로 바꾸지 않는다" 원칙과 정면으로
+  배치되지만, 이번 지시가 명시적이라(Emoji 아닌 Lucide Heart 사용을 두 번 강조) 그대로 따르고 완료 후
+  DESIGN.md 업데이트가 필요한지 별도 보고
+- **절대 변경 금지 재확인**: Prediction API/계산 로직, Calendar 날짜 계산, 월 이동, 날짜 선택, 기록
+  데이터, 데이터 모델, Selected Date Detail, Settings, 상태 관리 방식 — `functions/`, `migrations/` 등
+  diff 0 유지
+
+## Definition of Done
+- Prediction: Hero 카드 제거, 여러 카드가 가로로 이어지는 Carousel로 교체, 인디케이터 제거
+- Calendar: 8개 상태 전부 시각적으로 구분되고 동시에 겹쳐도 사라지지 않음, Legend 심볼이 실제 마커와 일치
+- 접근성: 월 이동 버튼 44px 터치 영역(Calendar 헤더 한정), aria-label 유지, 캘린더 트랙 키보드 스크롤
+- Selected Date Detail/Settings/데이터 로직 무변경, `functions/`·`migrations/` diff 0
+- CHANGELOG.md 무수정, 배포 안 함
+
+## Result
+
+### Status
+✅ 구현 완료, 로컬 검증까지(배포는 사용자가 별도 확인 후 요청 — 진행 안 함). CHANGELOG.md 무수정(지시대로).
+
+### 변경 파일
+`app.js`, `style.css`만 수정. `functions/`, `migrations/`, `wrangler.toml`, `manifest.json` diff 0 확인.
+`icons.js` 무변경(직전 Sprint에 추가한 `Heart` 등 기존 아이콘만 재사용).
+
+### Prediction 변경
+- Hero Carousel(카드 1개=화면 전체, 페이지 인디케이터) → Horizontal Card Carousel(카드 폭 46%, `gap:
+  var(--space-sm)`, `scroll-snap-align: start`) — 첫 카드 온전히 보이고 다음 카드 일부가 자연스럽게 잘려 보임
+- 카드 내용: 구분 아이콘(Droplet/Egg/Circle, Legend와 동일 아이콘 재사용) + 예측명 + 상대 날짜("N일 뒤",
+  신규 `formatRelativeDays()`) + 실제 날짜("M.D (요일)" 신규 `formatDotWithWeekday()`, 가임기는 "M.D부터")
+- 기존 Hero D-day(`--font-size-title` 큰 숫자)와 페이지 인디케이터 완전 제거, `setupPredictionCarousel()`
+  스크롤 리스너 함수 자체 삭제(더 이상 추적할 인디케이터가 없어짐)
+- 세로 높이: `padding: var(--space-xl) var(--space-lg)` → `var(--space-md) var(--space-base)`로 축소
+- 톤별 배경은 기존처럼 `color-mix()`로 Semantic Color만 옅게 섞어 구분(신규 토큰 없음)
+
+### Calendar 변경
+- 헤더: "2026년 7월" → "2026.07"(dot 표기), 월 이동 버튼에 Calendar 한정으로 `min-width/height:44px` 추가
+  (아이콘 자체 크기는 18px 유지)
+- 요일 행: 일요일만 `--color-danger`가 아닌 `--color-accent`로 구분(위험색 사용 금지 지시 반영), 토요일은
+  기존 Secondary Text 유지
+- Grid: 각 셀에 `border: 1px solid var(--color-border-soft)` 추가로 경계 표현, 빈 셀(month 시작 전 공백)도
+  `visibility:hidden` 대신 테두리만 있는 빈 박스로 변경(그리드가 끊겨 보이지 않도록), 날짜 숫자를 셀
+  중앙 정렬 → 상단 정렬로 변경(하단에 가임기/배란일 Band가 들어갈 공간 확보)
+- **생리기간**: 숫자 원 배경 → **셀 전체 배경**(Period Color)으로 변경. 인접 날짜가 같은 상태면
+  `period-connect-prev/next` 클래스로 해당 방향 모서리를 각지게 만들어 이어지는 배경처럼 보이게 함(주가
+  바뀌는 지점은 `isRangeConnected()`가 같은 행인지 확인해 자동으로 끊음)
+- **예상 생리기간**: 옅은 Tint 배경 + 점선 테두리(기존 대비 배경 추가, 실제 생리기간과 뚜렷이 구분). 개별
+  날짜마다 독립된 점선 박스로 유지(연결 처리 안 함 — "예측이라 아직 이어지지 않았다"는 의미로 의도적 선택)
+- **가임기 / 배란일**: 숫자 원 배경·작은 점 → **셀 하단 Band**로 통일(가임기 4px 옅은 색, 배란일 5px 진한
+  색). 배란일은 가임기 구간에 포함되는 날이라 CSS 우선순위(`.ovulation::after`가 `.fertile::after`보다
+  뒤에 선언)로 같은 날짜에서 배란일이 이김
+- **오늘**: 숫자 원 Ring → 숫자 아래 작은 점(선택 Ring과 겹치지 않도록 명확히 분리)
+- **선택한 날짜**: 기존과 동일하게 숫자 원 둘레 Accent Ring 유지(셀 배경은 채우지 않음)
+- **사랑기록**: 순수 CSS 하트 도형 → **실제 Lucide `Heart` 아이콘**(11px, 셀 우측 상단)으로 변경 —
+  아래 "DESIGN.md 충돌" 참고
+- **캘린더 기록(메모)**: 좌측 상단 점(7px) 유지, 사랑기록과 반대쪽 코너로 분리
+- 생리기간 배경 위에서는 숫자·기록점·하트 아이콘이 흰색(`--color-on-accent`)으로 자동 전환되도록
+  `.day-cell.period` 하위에 override 규칙 추가(대비 확보)
+
+### 날짜 상태별 표현 방식 (요약표)
+| 상태 | 표현 | 비고 |
+|---|---|---|
+| 오늘 | 작은 점 | 숫자 아래, 선택과 다른 표현 |
+| 선택한 날짜 | Accent Ring | 숫자 원 둘레만, 셀 배경 안 채움 |
+| 생리기간 | 셀 배경(Period Color) | 인접 날짜와 연결 |
+| 예상 생리기간 | 옅은 Tint + 점선 테두리 | 개별 박스, 연결 안 함 |
+| 가임기 | 셀 하단 Band(옅음) | 인접 날짜와 연결 |
+| 배란일 | 셀 하단 Band(진함) | 가임기보다 우선 표시 |
+| 사랑기록 | Lucide Heart 아이콘 | 셀 우측 상단 |
+| 캘린더 기록 | 작은 점 | 셀 좌측 상단, 사랑기록과 반대쪽 |
+
+### Legend 구성
+Legend를 Calendar와 같은 Card 안에 유지(별도 Card 아님). 심볼을 실제 Calendar 마커와 동일한 모양으로:
+생리기간=사각 Tint Box, 예상 생리기간=점선 Box, 가임기=옅은 Rounded Bar, 배란일=진한 Rounded Bar,
+사랑기록=Heart 아이콘, 캘린더 기록=작은 Dot. 더 이상 "전부 원형 색상점"이 아님.
+
+### DESIGN.md §5와의 충돌 (수정하지 않고 보고)
+DESIGN.md §5 Calendar Marker Rules는 "달력 셀 안의 작은 상태 표시는 아이콘으로 변경하지 않는다",
+"Legend에서만 Lucide 아이콘을 사용할 수 있다"고 명시합니다. 이번 지시는 사랑기록 마커에 "Emoji가 아니라
+Lucide Heart 또는 기존 Icon System 사용"을 두 차례 명시적으로 요구해 이 원칙과 정면으로 배치됩니다.
+지시가 명시적이라 그대로 구현했지만(`Heart({size:11})`을 day-cell 안에 직접 렌더링), **DESIGN.md §5는
+갱신되지 않은 상태입니다.** 이번 작업 범위(Prediction/Calendar만, 문서는 언급 없음)라 DESIGN.md는 손대지
+않았습니다 — 이 예외를 문서에 반영할지 별도로 알려주시면 반영하겠습니다.
+
+### 기존 로직을 유지한 방법
+- `classifyDate()`(생리/예상/가임기/배란/사랑/메모 판정)의 비교식은 한 글자도 바꾸지 않음 — 오직
+  `renderDayCell()`의 클래스 조합·마크업과 CSS만 변경
+- `buildCalendarCells()`, 월 이동 액션(`prev-month`/`next-month`), 날짜 선택 액션(`open-date`) 무변경
+- Selected Date Detail(`renderSelectedDateDetail`/`renderSheet`/`renderCycleManageSection`/
+  `renderLoveManageSection`), Settings(`renderSettingsScreen`/`renderProfileCard`/`renderInviteCard`/
+  `renderPartnerCard`/`renderNotificationSettingsCard`) 관련 함수는 이번 diff에 전혀 등장하지 않음(grep
+  확인)
+- `state` 객체 필드 변경 없음(신규/삭제 없음)
+
+### 접근성 확인
+- 월 이동 버튼: `aria-label` 유지, 터치 영역 Calendar 헤더 한정으로 44px 확보(시각적 아이콘은 18px로 절제)
+- Prediction: `.prediction-track`에 `tabindex="0"` + `aria-label` 유지(키보드 가로 스크롤 가능)
+- 색상만으로 상태 구분하지 않음: 오늘=점, 선택=Ring, 생리/예상=배경 형태(실선vs점선), 가임기/배란=Band
+  두께·위치, 사랑기록=아이콘, 기록=점 — 전부 형태·위치가 다름
+- 날짜 셀에 `role="gridcell"`, `aria-selected`, `aria-label="N일"` 추가(신규) — 전체 `calendar-grid`를
+  `role="grid"`로 감싸는 완전한 ARIA Grid 패턴까지는 구현하지 않음(키보드 네비게이션 재구현이 필요해
+  범위 초과로 판단)
+- 터치 영역 44px는 Calendar 헤더 버튼만 처리 — 다른 화면의 `.icon-btn.header`(Settings 등)는 여전히 32px로
+  남아있음(이번 범위 아님, 기존에 이미 알려진 이슈)
+
+### 브라우저에서 직접 확인할 항목
+- Prediction: 카드 3장 중 1.8~2.2장이 실제로 보이는지, 스와이프가 부드러운지, 텍스트 잘림 없는지
+- Calendar: 생리기간이 여러 날 이어질 때 배경이 실제로 연결돼 보이는지(주 경계에서 자연스럽게 끊기는지),
+  가임기 Band와 배란일 Band가 겹칠 때 배란일이 우선 표시되는지, 사랑기록 Heart 아이콘 가독성(11px가
+  실기기에서 충분히 크게 보이는지)
+- 좁은 화면(360px 이하)에서 캘린더 7열이 안 깨지는지, 가로 스크롤 발생 안 하는지
+- Console Error 없는지(특히 `color-mix()` 미지원 구형 브라우저 — 이번에도 폴백 없이 사용, 직전 Sprint와
+  동일 리스크)
+
+### 배포 전 남은 위험 요소
+- `color-mix()`는 비교적 최신 CSS 기능이라 구형 Safari/일부 WebView에서 미지원일 수 있음(이미 직전
+  Sprint부터 있던 리스크, 이번에 범위 확대)
+- 셀 테두리(`border-soft`)와 연결된 배경/Band가 만나는 지점에서 아주 얇은 경계선이 완전히 사라지지 않고
+  희미하게 보일 수 있음(의도적으로 감수한 트레이드오프 — "셀 경계 분명" 요구와 "배경 연결" 요구가 본질적으로
+  약간 상충하기 때문)
+- 사랑기록 Heart 아이콘이 DESIGN.md §5와 충돌 — 문서 갱신 여부 결정 필요
+- 브라우저 실사용 확인 전 단계
+
+---
+
+# Current Task (직전 완료분: Home Hero 개편 + 3건 후속 수정)
+
+## Goal
+Home을 처음부터 새로 디자인한다: Prediction을
 Hero Card Carousel로, Calendar 마커를 오늘/선택/생리기간/가임기/배란일/사랑기록/캘린더기록이 서로 다른
 시각 언어(점/링/배경/하트/점 등)를 갖도록 재설계, Selected Date Detail을 조회 전용 Summary로 바꾸고
 수정·삭제·추가는 이 프로젝트 최초의 Bottom Sheet Component로 분리. Detail 화면(이미 지난 Sprint에서
