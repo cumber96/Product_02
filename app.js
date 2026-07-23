@@ -39,6 +39,11 @@ const state = {
 
 const appEl = document.getElementById("app");
 
+// ---------- Section Header ----------
+function renderSectionHeader(icon, title) {
+  return `<h2 class="section-header">${icon} ${title}</h2>`;
+}
+
 // ---------- API ----------
 async function api(path, options = {}) {
   const res = await fetch(path, {
@@ -192,7 +197,7 @@ async function renderSettingsScreen() {
 
   appEl.innerHTML = `
     <div class="detail-header">
-      <button data-action="close-settings" aria-label="뒤로">${ArrowLeft()}</button>
+      <button class="icon-btn header" data-action="close-settings" aria-label="뒤로">${ArrowLeft()}</button>
       <div class="detail-date">설정</div>
     </div>
     ${renderNotificationSettingsCard(pushStatus)}
@@ -206,7 +211,7 @@ function renderNotificationSettingsCard(pushStatus) {
   if (pushStatus === "unsupported") {
     return `
       <div class="card">
-        <h2>${Bell()} 알림 설정</h2>
+        ${renderSectionHeader(Bell(), "알림 설정")}
         <p class="hint">이 브라우저에서는 알림을 지원하지 않아요.</p>
       </div>
     `;
@@ -214,7 +219,7 @@ function renderNotificationSettingsCard(pushStatus) {
   if (pushStatus === "needs-install") {
     return `
       <div class="card">
-        <h2>${Bell()} 알림 설정</h2>
+        ${renderSectionHeader(Bell(), "알림 설정")}
         <p class="hint">아이폰에서 알림을 받으려면 먼저 사파리 하단 <b>공유 버튼</b> → <b>홈 화면에 추가</b>로 앱을 설치해주세요. 설치 후 홈 화면 아이콘으로 다시 열면 켤 수 있어요.</p>
       </div>
     `;
@@ -222,7 +227,7 @@ function renderNotificationSettingsCard(pushStatus) {
   if (pushStatus === "subscribed") {
     return `
       <div class="card">
-        <h2>${Bell()} 알림 설정</h2>
+        ${renderSectionHeader(Bell(), "알림 설정")}
         <p class="hint">알림이 켜져 있어요. 상대방이 기록을 업데이트하면 알려드려요.</p>
         <button class="btn ghost block" data-action="unsubscribe-push" style="margin-top:12px">알림 끄기</button>
       </div>
@@ -230,7 +235,7 @@ function renderNotificationSettingsCard(pushStatus) {
   }
   return `
     <div class="card">
-      <h2>${Bell()} 알림 설정</h2>
+      ${renderSectionHeader(Bell(), "알림 설정")}
       <p class="hint">상대방이 기록을 업데이트하면 바로 알려드려요.</p>
       <button class="btn block" data-action="subscribe-push" style="margin-top:12px">알림 켜기</button>
     </div>
@@ -242,7 +247,7 @@ function renderInviteCard(partnerConnected) {
   const result = state.inviteResult;
   return `
     <div class="card">
-      <h2>${UserPlus()} 남자친구 초대하기</h2>
+      ${renderSectionHeader(UserPlus(), "남자친구 초대하기")}
       ${
         result
           ? `
@@ -262,7 +267,7 @@ function renderInviteCard(partnerConnected) {
 
 function renderPartnerCard(partner) {
   if (partner) return "";
-  return `<div class="card"><h2>아직 연결된 사용자가 없어요</h2></div>`;
+  return `<div class="card"><h2 class="section-header">아직 연결된 사용자가 없어요</h2></div>`;
 }
 
 function renderSummaryCard() {
@@ -270,14 +275,14 @@ function renderSummaryCard() {
   if (!p || !p.hasData) {
     return `
       <div class="card">
-        <h2>${Sparkles()} 예측 정보</h2>
+        ${renderSectionHeader(Sparkles(), "예측 정보")}
         <p style="font-size:13px;color:var(--color-text-secondary);margin:0">아직 기록이 없어요. 첫 생리 시작일을 기록하면 예측이 시작돼요.</p>
       </div>
     `;
   }
   return `
     <div class="card">
-      <h2>${Sparkles()} 예측 정보</h2>
+      ${renderSectionHeader(Sparkles(), "예측 정보")}
       <div class="summary-grid">
         <div class="summary-item">
           <div class="label">평균 생리주기</div>
@@ -304,9 +309,9 @@ function renderCalendarCard() {
   return `
     <div class="card">
       <div class="calendar-header">
-        <button data-action="prev-month" aria-label="이전 달">${ChevronLeft()}</button>
+        <button class="icon-btn header" data-action="prev-month" aria-label="이전 달">${ChevronLeft()}</button>
         <div class="month-label">${year}년 ${month + 1}월</div>
-        <button data-action="next-month" aria-label="다음 달">${ChevronRight()}</button>
+        <button class="icon-btn header" data-action="next-month" aria-label="다음 달">${ChevronRight()}</button>
       </div>
       <div class="weekday-row">${WEEKDAYS.map((w) => `<div>${w}</div>`).join("")}</div>
       <div class="calendar-grid">${cells.map(renderDayCell).join("")}</div>
@@ -368,7 +373,7 @@ function buildCalendarCells(year, month) {
 function renderAddLogForm() {
   return `
     <div class="card">
-      <h2>${SquarePen()} 새 기록 추가</h2>
+      ${renderSectionHeader(SquarePen(), "새 기록 추가")}
       <form id="add-log-form">
         <div class="form-row">
           <label>시작일</label>
@@ -401,7 +406,7 @@ async function renderDetailScreen() {
 
   appEl.innerHTML = `
     <div class="detail-header">
-      <button data-action="close-detail" aria-label="뒤로">${ArrowLeft()}</button>
+      <button class="icon-btn header" data-action="close-detail" aria-label="뒤로">${ArrowLeft()}</button>
       <div class="detail-date">${formatLong(dateStr)}</div>
     </div>
     ${renderDetailCycleSection(log, isOwner)}
@@ -413,7 +418,7 @@ function renderDetailCycleSection(log, isOwner) {
   if (!log) {
     return `
       <div class="card">
-        <h2>${NotebookText()} 캘린더 기록</h2>
+        ${renderSectionHeader(NotebookText(), "캘린더 기록")}
         <div class="empty-state">이 날짜에 기록된 생리 기록이 없어요</div>
       </div>
     `;
@@ -422,7 +427,7 @@ function renderDetailCycleSection(log, isOwner) {
   if (isOwner && state.editingLogId === log.id) {
     return `
       <div class="card">
-        <h2>${NotebookText()} 캘린더 기록</h2>
+        ${renderSectionHeader(NotebookText(), "캘린더 기록")}
         <form id="edit-log-form" data-id="${log.id}">
           <div class="form-row">
             <label>시작일</label>
@@ -447,7 +452,7 @@ function renderDetailCycleSection(log, isOwner) {
 
   return `
     <div class="card">
-      <h2>${NotebookText()} 캘린더 기록</h2>
+      ${renderSectionHeader(NotebookText(), "캘린더 기록")}
       <div class="log-item">
         <div>
           <div class="dates">${formatShort(log.start_date)} ${log.end_date ? "~ " + formatShort(log.end_date) : "(진행중)"}</div>
@@ -457,9 +462,9 @@ function renderDetailCycleSection(log, isOwner) {
           isOwner
             ? `
           <div class="log-actions">
-            ${!log.end_date ? `<button data-action="quick-end" data-id="${log.id}">오늘 종료</button>` : ""}
-            <button data-action="edit-log" data-id="${log.id}">수정</button>
-            <button class="delete" data-action="delete-log" data-id="${log.id}">삭제</button>
+            ${!log.end_date ? `<button class="text-btn" data-action="quick-end" data-id="${log.id}">오늘 종료</button>` : ""}
+            <button class="text-btn" data-action="edit-log" data-id="${log.id}">수정</button>
+            <button class="text-btn delete" data-action="delete-log" data-id="${log.id}">삭제</button>
           </div>
         `
             : ""
@@ -478,7 +483,7 @@ function renderDetailLoveSection(loveLogsForDate, isOwner) {
           <div class="note">${l.note ? escapeHtml(l.note) : "메모 없음"}</div>
           ${
             isOwner
-              ? `<div class="log-actions"><button class="delete" data-action="delete-love-log" data-id="${l.id}">삭제</button></div>`
+              ? `<div class="log-actions"><button class="text-btn delete" data-action="delete-love-log" data-id="${l.id}">삭제</button></div>`
               : ""
           }
         </div>
@@ -489,7 +494,7 @@ function renderDetailLoveSection(loveLogsForDate, isOwner) {
 
   return `
     <div class="card">
-      <h2>${Heart()} 사랑기록</h2>
+      ${renderSectionHeader(Heart(), "사랑기록")}
       ${items}
       ${
         isOwner

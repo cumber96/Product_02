@@ -247,6 +247,14 @@ body {
   justify-content: center;
 }
 
+.icon-btn.header {
+  background: var(--color-surface-strong);
+  padding: 0;
+  width: var(--space-xl);
+  height: var(--space-xl);
+  border-radius: var(--radius-full);
+}
+
 /* --- Card --- */
 .card {
   background: var(--color-surface);
@@ -256,7 +264,7 @@ body {
   margin-bottom: var(--space-md);
 }
 
-.card h2 {
+.section-header {
   font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-md);
@@ -326,7 +334,7 @@ button {
   background: var(--color-accent-strong);
   color: var(--color-on-accent);
   border: none;
-  padding: 14px 24px;
+  padding: 14px var(--space-lg);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-medium);
@@ -336,6 +344,13 @@ button {
 }
 
 .btn:active { filter: brightness(0.9); }
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.text-btn:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: 2px;
+}
 
 .btn.secondary {
   background: var(--color-surface);
@@ -368,19 +383,6 @@ button {
   margin-bottom: var(--space-md);
 }
 
-.detail-header button {
-  background: var(--color-surface-strong);
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  color: var(--color-text-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .detail-header .detail-date {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-subtitle-lg);
@@ -399,19 +401,6 @@ button {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-subtitle);
   color: var(--color-text-primary);
-}
-
-.calendar-header button {
-  background: var(--color-surface-strong);
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  color: var(--color-text-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .weekday-row, .calendar-grid {
@@ -566,7 +555,7 @@ button {
 .log-item .dates { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
 .log-item .note { color: var(--color-text-secondary); font-size: var(--font-size-caption); }
 
-.log-actions button {
+.text-btn {
   border: none;
   background: transparent;
   color: var(--color-text-primary);
@@ -575,9 +564,9 @@ button {
   padding: var(--space-xs) var(--space-sm);
 }
 
-.log-actions button:hover { text-decoration: underline; }
+.text-btn:hover { text-decoration: underline; }
 
-.log-actions button.delete { color: var(--color-danger); }
+.text-btn.delete { color: var(--color-danger); }
 
 .empty-state {
   text-align: center;

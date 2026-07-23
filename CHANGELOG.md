@@ -11,6 +11,13 @@
 
 ### Changed
 
+- Button Family를 Action Button(`.btn`)/Icon Button(`.icon-btn`, `.icon-btn.header`)/Text Button
+  (`.text-btn`) 3개 구조로 정리. `.detail-header button`/`.calendar-header button`의 100% 중복 CSS를
+  `.icon-btn.header` 하나로 통합하고, `.log-actions button`을 재사용 가능한 `.text-btn`으로 승격.
+  Button 전체에 키보드 접근성을 위한 `:focus-visible` 아웃라인 추가(신규 토큰 없이 기존 색상 재사용).
+  시각적 변화 없음
+- 반복되던 "아이콘 + 제목" 카드 헤더 패턴을 `renderSectionHeader()` 헬퍼 + `.section-header` 클래스로
+  통합 (12곳). 시각적 변화 없음
 - 예상 생리(Predicted Period) 표시 가시성 개선: 대비가 낮았던 `brand-200`(연한 핑크, 1.37:1) 대신
   `brand-500`(진한 핑크, 3.52:1)을 재사용하고, 점선 테두리 + 옅은(12%) 배경 채움으로 실제 생리(solid fill)와
   "색상"이 아닌 "강도" 차이로 구분되도록 변경
