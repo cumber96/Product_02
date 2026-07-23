@@ -254,6 +254,17 @@ UI 코드에 SVG를 반복 작성하지 않는다.
 
 색상만으로 상태를 구분하지 않는다.
 
+## 6.1 Scale vs Semantic Role
+
+- Radius와 Spacing은 디자인 스케일의 일부로 관리하며, 현재 사용 여부만으로 제거하지 않는다.
+- 새로운 컴포넌트는 기존 Radius/Spacing Scale 안에서 값을 선택한다.
+- Color는 현재 프로젝트에서 Semantic Role 중심으로 관리한다.
+- 명도 순서만으로 Color Token을 스케일로 간주하거나 보존하지 않는다.
+- 실제 역할과 사용 목적이 없는 Color Token은 제거한다.
+- Color Token은 Primitive Token과 Semantic Token을 구분한다.
+- 현재 프로젝트는 Semantic Token 중심으로 관리한다.
+- Primitive Color Scale이 필요한 경우 별도 설계 후 도입한다.
+
 ---
 
 # 7. Typography
@@ -318,6 +329,8 @@ UI 코드에 SVG를 반복 작성하지 않는다.
 - 48
 - 64
 
+Spacing Token은 디자인 스케일의 일부로 관리하며, 현재 참조 여부만으로 제거하지 않는다.
+
 ---
 
 # 9. Radius
@@ -325,6 +338,10 @@ UI 코드에 SVG를 반복 작성하지 않는다.
 Radius는 프로젝트 전체에서 일관성을 유지한다.
 
 새로운 Radius 값을 추가하지 않는다.
+
+Radius Token은 사용 여부와 관계없이 디자인 스케일(xs~xl~full)을 유지한다.
+
+새로운 컴포넌트는 기존 Radius Scale 안에서 선택하여 사용하며, 임의의 Radius 값을 추가하지 않는다.
 
 ---
 
