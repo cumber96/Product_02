@@ -38,7 +38,12 @@
 ## Result
 
 ### Status
-✅ 구현 완료, 로컬 검증까지(배포는 사용자가 별도 확인 후 요청 — 진행 안 함). CHANGELOG.md 무수정(지시대로).
+✅ 구현 완료, 사용자 확인 후 배포 요청 받아 커밋 `0453ab5`로 배포 완료. CHANGELOG.md도 이번엔 배포에 맞춰
+갱신(DESIGN.md §5 충돌 사항도 함께 기록).
+
+### 배포
+✅ 커밋 `0453ab5`, `origin/main`으로 push 완료. Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB
+마이그레이션 없어 원격 D1 작업 불필요.
 
 ### 변경 파일
 `app.js`, `style.css`만 수정. `functions/`, `migrations/`, `wrangler.toml`, `manifest.json` diff 0 확인.
