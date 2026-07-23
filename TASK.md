@@ -1,103 +1,80 @@
 # Current Task
 
 ## Goal
-Pretendard를 프로젝트 기본 폰트로 적용 (셀프 호스팅, Subset woff2)
+Typography Primitive Token 도입 — 기존 font-size/font-weight/line-height/letter-spacing 값을 CSS 변수로 토큰화 (시각적 변경 없음)
 
 ## Background
-아이콘 교체(Lucide) 작업 이후, 별도로 진행한 디자인 작업. 진행 순서:
-1. 현재 폰트 적용 구조 조사 — `style.css`의 `body`에 이미 "Pretendard"가 폰트 스택에 있었지만
-   `@font-face`가 어디에도 없어 실제로는 전혀 로드되지 않고 있었음. 순서도 `-apple-system`/`Inter`가
-   앞에 있어 웹폰트를 추가해도 애플 기기에서는 절대 선택되지 않는 구조였음.
-2. 적용 방법 설계: React/TS/번들러 없는 정적 배포 구조이므로 CDN 대신 셀프 호스팅으로 결정.
-3. Pretendard 공식 배포판을 확인한 결과 "Dynamic Subset"은 굵기당 92개 조각 파일(4개 굵기 기준 368개
-   파일 + 약 3,300줄 CSS)로 구성되어 있음을 확인, 손으로 관리하기엔 과함을 사용자에게 알리고
-   굵기당 파일 1개인 단순 "Subset"으로 변경 확정.
+Pretendard 폰트 적용 작업 당시 "Typography Scale 개선은 다음 작업으로 분리"라고 범위를 나눠뒀던 후속 작업. 진행 순서:
+1. `style.css` 전체를 조사해 실제 쓰이는 font-size(11/12/13/14/16/18/20px)와 font-weight(400/500/600/700)
+   조합을 전부 추출, 셀렉터별 매핑 표로 정리
+2. 표를 기준으로 Typography Token(안)을 제안 — Primitive Token 방식(크기/굵기/줄간격을 개별 변수로 분리)과
+   Semantic Token 방식(역할별로 크기+굵기+줄간격을 한 번에 묶는 방식) 중 사용자가 Primitive 방식을 선택
+3. 구현 전 변경 대상 파일과 영향 범위를 Plan으로 먼저 보고 후 승인받고 진행
 
 ## Scope
-- `/fonts` 디렉터리 신규 생성, Pretendard 공식 저장소에서 Regular(400)/Medium(500)/SemiBold(600)/
-  Bold(700) subset woff2 4개 다운로드
-- `style.css` 상단에 `@font-face` 4개 추가 (`font-display: swap`)
-- `body`의 `font-family`를 Pretendard 우선으로 재정렬
-- `index.html`에 자주 쓰이는 두 굵기(400, 600) `<link rel="preload">` 추가
-- **범위 아님**: font-size/font-weight/line-height 변경(Typography Scale 개선은 다음 작업으로 분리),
-  레이아웃/기능 변경, CDN/React/TypeScript/번들러 도입
+- `style.css`의 `:root`에 `--font-size-*`(7종), `--font-weight-*`(4종), `--line-height-*`(3종),
+  `--tracking-tight` 추가
+- 기존 21개 셀렉터의 리터럴 font-size/font-weight/line-height/letter-spacing 값을 위 토큰 참조로 치환
+- **범위 아님**:
+  - 실제 크기/굵기/줄간격 값 변경 (계산값 100% 유지)
+  - `@font-face` 4개의 `font-weight` 토큰화 — CSS 스펙상 `@font-face` 디스크립터는 `var()`를
+    지원하지 않아 리터럴(400/500/600/700)로 유지
+  - `app.js`의 인라인 `style="font-size:..."` 2곳 (초대 코드 안내, 예측 정보 빈 상태) — 별도 작업
+  - `app.js`가 참조하는 `var(--pink-light)`/`var(--pink)`/`var(--text-muted)` (미정의 변수, 기존 버그로 추정,
+    이번 작업과 무관)
+  - 레이아웃/기능 변경, 새 라이브러리 도입
 
 ## Definition of Done
-- Pretendard가 실제로 로드되어 화면에 적용됨 (기존엔 이름만 있고 미적용 상태였음)
-- 기존 font-size/font-weight/line-height 값 변경 없음
-- preload 적용, `font-display: swap`으로 텍스트 안 보이는 시간 없음
-- 브라우저 콘솔에 폰트 관련 오류 없음, Lighthouse에 폰트 관련 경고 없음
-- 레이아웃 깨짐 없음 (모바일 뷰포트 포함)
+- 모든 규칙의 font-size/font-weight/line-height/letter-spacing 계산값이 변경 전과 100% 동일
+- `@font-face` 4곳을 제외한 리터럴 값이 CSS에 남아있지 않음
+- CSS 구조(중괄호 짝) 깨짐 없음
+- 레이아웃/기능에 영향 없음
 
 ---
 
 # Result
 
 ## Status
-✅ Completed, push/배포 완료 (commit 3715076, main으로 push)
+✅ Completed, 로컬 커밋 및 push/배포 완료 (commit 39ecbf9, main으로 push)
 
 ## 문제 분석
-`style.css`의 `body` 폰트 스택에 `"Pretendard"`라는 이름이 이미 들어 있었지만, `@font-face` 선언이
-프로젝트 어디에도 없어 웹폰트로 로드되고 있지 않았음 — 이름만 있고 실체가 없는 상태였음. 게다가 스택
-순서상 `-apple-system`/`BlinkMacSystemFont`/`"Inter"`가 앞서 있어, 설령 폰트를 로드해도 애플 기기(가장
-흔한 사용 환경)에서는 시스템 폰트가 먼저 매칭되어 절대 쓰이지 않는 구조였음. 이번 작업은 "이름만 있던
-설정"을 실제로 동작하게 만드는 것이었음.
+`style.css`에 font-size 25곳, font-weight 16곳이 리터럴 숫자로 흩어져 있어 값 하나를 바꾸려면 여러 셀렉터를
+찾아 다녀야 하고, 같은 의도(예: 13px 캡션)가 여러 곳에 중복 하드코딩돼 있어 일관성을 보장하기 어려운
+상태였음. 값 자체는 문제가 없었으므로(디자인 재설계 아님), 기존 값을 그대로 변수화하는 것이 목표.
 
 ## 수정 내용
-- `/fonts` (신규 디렉터리): Pretendard 공식 GitHub 저장소(`orioncactus/pretendard`)의
-  `packages/pretendard/dist/web/static/woff2-subset/`에서 4개 파일 다운로드
-  - `Pretendard-Regular.subset.woff2` (400, 267KB)
-  - `Pretendard-Medium.subset.woff2` (500, 268KB)
-  - `Pretendard-SemiBold.subset.woff2` (600, 269KB)
-  - `Pretendard-Bold.subset.woff2` (700, 271KB)
-  - 한글 완성형+영문+기호만 포함된 subset이라 원본 풀세트 대비 용량이 훨씬 작음
 - `style.css`
-  - 파일 최상단에 `@font-face` 4개 추가, 모두 `font-display: swap`
-  - `body`의 `font-family`를 `"Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif`로 변경 (Pretendard 최우선, 로드 실패시에만 시스템 폰트 폴백).
-    기존에 있던 `"Inter"`는 제거함 — Pretendard와 마찬가지로 `@font-face` 없이 이름만 있던 죽은 폴백이라
-    실질적 동작 변화 없음
-  - font-size/font-weight/line-height는 일절 변경하지 않음
-- `index.html`
-  - `<link rel="preload">` 2개 추가: Regular(400)와 SemiBold(600)만 선택
-  - 이유: 로그인 화면(h1=600, 본문=400)과 홈 화면 모두 이 두 굵기가 최초 화면에 보장적으로 쓰이는 반면,
-    500(버튼/라벨)과 700(예측 카드 숫자)은 화면 상태에 따라 등장 시점이 달라 preload 대상에서 제외 —
-    Lighthouse가 "미사용 preload"로 지적할 여지를 없앰
-  - `crossorigin` 속성 포함 (동일 출처라도 폰트 preload는 항상 anonymous CORS 모드로 요청되므로,
-    빠뜨리면 실제 `@font-face` 요청과 매칭되지 않아 preload가 무효화됨)
+  - `:root`에 Typography Primitive Token 추가 (기존 `--space-*`, `--radius-*` 바로 아래)
+    - `--font-size-title`(20px) / `-subtitle-lg`(18px) / `-subtitle`(16px) / `-body`(14px) /
+      `-caption`(13px) / `-caption-sm`(12px) / `-caption-xs`(11px)
+    - `--font-weight-regular`(400) / `-medium`(500) / `-semibold`(600) / `-bold`(700)
+    - `--line-height-tight`(1.2) / `-snug`(1.25) / `-relaxed`(1.5)
+    - `--tracking-tight`(-0.18px)
+  - `.login-screen h1`, `.login-screen p`, `.invite-note`, `.error-note`, `.topbar .name`,
+    `.role-badge`, `.card h2`, `.card p.hint`, `.summary-item .label/.value`, `.invite-url input`,
+    `.btn`, `.detail-header .detail-date`, `.calendar-header .month-label`, `.weekday-row div`,
+    `.day-cell`, `.legend`, `.form-row label`, `.form-row input/textarea`, `.log-item`,
+    `.log-item .dates/.note`, `.log-actions button`, `.empty-state`, `.toast` — 총 21개 셀렉터,
+    45개 선언의 리터럴 값을 토큰 참조로 치환
+  - `@font-face` 4개는 계획 단계에서 토큰화를 시도했으나, `var()`가 `@font-face` 디스크립터에서
+    동작하지 않는다는 CSS 스펙 제약을 확인하고 리터럴로 되돌림 (실수로 남긴 것이 아니라 의도적 결정)
 
 ## 테스트 방법과 결과
-1. 다운로드한 4개 파일이 유효한 WOFF2 포맷인지 `file` 명령으로 확인 — 모두 정상
-2. CSS 중괄호 짝 검증 통과
-3. 로컬 wrangler dev + Playwright(Chromium)로 실제 로딩 확인
-   - `document.fonts`로 로드 상태 확인: 로그인 화면(미인증)에서는 400/600만 `status=loaded`, 500/700은
-     `unloaded` (해당 화면에 그 굵기 텍스트가 없으므로 정상 — 필요할 때만 로드되는 브라우저 기본 동작)
-   - 인증된 홈 화면에서는 400/500/600/700 전부 `status=loaded`
-   - `getComputedStyle(document.body).fontFamily`로 Pretendard가 최우선으로 적용됨을 확인
-   - 스크린샷으로 로그인 화면·홈 화면 모두 Pretendard 특유의 한글 글자 형태로 정상 렌더링, 레이아웃
-     깨짐 없음 확인
-4. 브라우저 콘솔 오류: 폰트 관련 오류 0건 (로그인 화면에서 보이는 Google Identity Services 관련 경고는
-   `localhost` 테스트 환경의 기존 한계로 폰트와 무관, 이전 작업들에서도 동일하게 확인된 사항)
-5. Lighthouse(`--preset=desktop`, performance 카테고리) 실행
-   - `font-display-insight` 감사 **score 1 (통과)** — `font-display: swap` 정상 인식
-   - `network-requests` 상세에서 두 preload 파일이 `resourceType: Font`, `priority: High`로 실제
-     우선순위 상승되어 요청됨을 확인 — "미사용 preload" 경고 없음
-   - `render-blocking-insight`는 `style.css` 자체(2.8KB)만 지적, 폰트 관련 항목 없음
-   - 폰트로 인한 신규 경고/오류 없음
-6. 테스트 데이터 모두 정리, dev 서버 종료 완료
+1. `grep`으로 font-size/font-weight/line-height/letter-spacing 리터럴 검색 — `@font-face` 4곳을 제외한
+   모든 곳이 토큰 참조로 바뀐 것을 확인
+2. CSS 중괄호 개수 검증 (74/74, 구조 깨짐 없음)
+3. `git diff` 전체를 한 줄씩 대조해 "리터럴 → 동일 값의 var() 참조"로만 이루어졌는지 확인
+4. 브라우저 실사용 화면 확인은 미실시 — 계산값이 100% 동일한 순수 변수 치환이라 시각적 리스크가
+   낮다고 판단했으나, 다음 로컬 실행 시 육안 확인 권장
 
 ## 수정 파일
-- `/fonts/Pretendard-Regular.subset.woff2` (신규)
-- `/fonts/Pretendard-Medium.subset.woff2` (신규)
-- `/fonts/Pretendard-SemiBold.subset.woff2` (신규)
-- `/fonts/Pretendard-Bold.subset.woff2` (신규)
 - `style.css`
-- `index.html`
 
 ## 기존 기능에 미치는 영향
-- font-size/font-weight/line-height, 레이아웃, 기능은 전혀 변경하지 않음 — 글꼴만 교체됨
-- Typography Scale(디자인 토큰화)은 이번 범위에서 제외, 다음 작업으로 분리
-- React/TypeScript/번들러/CDN 도입 없음, 정적 배포 구조 그대로 유지
+- font-size/font-weight/line-height/letter-spacing 계산값, 레이아웃, 기능은 전혀 변경하지 않음 —
+  같은 값을 참조하는 방식만 리터럴에서 변수로 전환
+- 이후 크기/굵기 스케일을 조정할 때 `:root`의 토큰 값만 바꾸면 전체에 반영되는 구조가 됨
 
 ## 로컬 커밋 / 배포 여부
-✅ 로컬 커밋 완료 (3715076), 사용자 확인 후 `origin/main`으로 push 완료.
+✅ 로컬 커밋 완료 (39ecbf9), `origin/main`으로 push 완료.
 Cloudflare Pages Git 연동을 통해 자동 배포됨. (새 DB 마이그레이션 없어 원격 D1 작업 불필요)

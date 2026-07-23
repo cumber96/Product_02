@@ -12,6 +12,7 @@
 ### Changed
 
 - 기본 폰트를 Pretendard로 적용 (셀프 호스팅 woff2 subset, `/fonts`). 기존에도 이름은 있었으나 실제로는 로드되지 않던 상태였음
+- font-size/font-weight/line-height/letter-spacing을 `:root`의 Typography Primitive Token(`--font-size-*`, `--font-weight-*`, `--line-height-*`, `--tracking-tight`)으로 토큰화. 기존 값 그대로 재사용해 화면상 변화는 없음
 - 전체 아이콘을 이모지/문자(⚙️🔔💌📊✍️📋💜‹›)에서 Lucide 기반 SVG 아이콘으로 교체, `icons.js`에서 중앙 관리
 - 캘린더 하단에 항상 표시되던 기록 리스트 제거, 날짜를 탭하면 해당 날짜의 상세 페이지에서 캘린더 기록과 사랑기록을 확인
 - 홈 화면에 항상 떠 있던 알림/iOS 설치 안내 배너를 제거하고 설정 페이지로 이전
