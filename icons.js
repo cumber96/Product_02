@@ -33,6 +33,10 @@ export const NotebookText = icon(
 export const Heart = icon(
   `<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>`
 );
+export const User = icon(
+  `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`
+);
+export const X = icon(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`);
 
 // 캘린더 범례 전용 (날짜 칸 안의 마킹은 기존 CSS 도형 유지, 범례에서만 사용)
 export const Droplet = icon(

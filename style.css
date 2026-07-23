@@ -194,27 +194,36 @@ body {
   max-width: 320px;
 }
 
-/* --- Layout --- */
-.topbar {
+/* --- Home Header --- */
+.home-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-base);
+  margin-bottom: var(--space-lg);
 }
 
-.topbar .who {
+.home-date {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+}
+
+/* --- Profile (Settings) --- */
+.profile-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
 }
 
-.topbar img.avatar {
+.avatar {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
 }
 
-.topbar .name {
+.profile-name {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-body);
   color: var(--color-text-primary);
@@ -278,29 +287,88 @@ body {
   margin: 0;
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
+/* --- Prediction Carousel --- */
+.prediction {
+  margin-bottom: var(--space-lg);
 }
 
-.summary-item {
-  background: var(--color-surface-soft);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
+.prediction-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 
-.summary-item .label {
-  font-size: var(--font-size-caption-sm);
+.prediction-track::-webkit-scrollbar { display: none; }
+
+.prediction-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xl) var(--space-lg);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.prediction-slide.tone-period {
+  background: color-mix(in srgb, var(--color-period) 8%, var(--color-surface-soft));
+}
+
+.prediction-slide.tone-ovulation {
+  background: color-mix(in srgb, var(--color-ovulation) 8%, var(--color-surface-soft));
+}
+
+.prediction-slide .label {
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
 }
 
-.summary-item .value {
-  font-size: var(--font-size-subtitle);
+.prediction-slide .dday {
+  font-size: var(--font-size-title);
   font-weight: var(--font-weight-bold);
-  margin-top: 2px;
+}
+
+.prediction-slide.tone-period .dday { color: var(--color-period); }
+.prediction-slide.tone-ovulation .dday { color: var(--color-ovulation); }
+
+.prediction-slide .date {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+}
+
+.prediction-slide .sub {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.prediction-empty {
+  padding: var(--space-lg) 0;
+  text-align: center;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.prediction-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.prediction-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-default);
+}
+
+.prediction-dots .dot.active {
+  background: var(--color-accent);
 }
 
 /* --- Invite --- */
@@ -460,17 +528,29 @@ button {
 .day-cell.ovulation::after {
   content: "";
   position: absolute;
-  bottom: 3px;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
+  width: 7px;
+  height: 7px;
   border-radius: var(--radius-full);
   background: var(--color-ovulation);
 }
 
-.day-cell.today .num {
-  box-shadow: inset 0 0 0 1.5px var(--color-border-strong);
+.day-cell.today::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-secondary);
+}
+
+.day-cell.selected .num {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
   border-radius: var(--radius-full);
   width: 28px;
   height: 28px;
@@ -478,6 +558,45 @@ button {
   align-items: center;
   justify-content: center;
 }
+
+/* 사랑기록 / 캘린더 기록(메모) 마커 — day-cell::before/::after는 오늘/배란일이 이미 사용 중이라
+   별도 <span class="cell-marker">로 렌더링 */
+.cell-marker {
+  position: absolute;
+}
+
+.cell-marker.record {
+  bottom: 2px;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-primary);
+}
+
+/* 순수 CSS로 그린 하트(원 2개 + 45도 회전 정사각형) — Lucide 아이콘이 아닌 도형이라
+   DESIGN.md 5장 "셀 안 마킹은 아이콘으로 바꾸지 않는다" 원칙을 그대로 지킨다 */
+.cell-marker.love {
+  top: 4px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-text-primary);
+  transform: rotate(-45deg);
+}
+
+.cell-marker.love::before,
+.cell-marker.love::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-primary);
+}
+
+.cell-marker.love::before { top: -3px; left: 0; }
+.cell-marker.love::after { top: 0; left: 3px; }
 
 .legend {
   display: flex;
@@ -508,6 +627,120 @@ button {
   background: var(--color-fertile);
   border-radius: var(--radius-full);
   padding: 2px;
+}
+
+.legend-love .icon {
+  color: var(--color-text-primary);
+}
+
+.legend-record .icon {
+  color: var(--color-text-primary);
+}
+
+/* --- Selected Date Detail --- */
+.selected-date-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.selected-date-status {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.selected-date-section + .selected-date-section {
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.selected-date-subhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.selected-date-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-base);
+  padding: var(--space-sm) 0;
+}
+
+.selected-date-row + .selected-date-row {
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.selected-date-row-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.selected-date-row-value {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+/* --- Bottom Sheet --- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-base) var(--space-base) var(--space-xl);
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 201;
+  animation: sheet-up 200ms ease-out;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-default);
+  margin: 0 auto var(--space-base);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.manage-list {
+  margin-top: var(--space-md);
 }
 
 /* --- Form --- */

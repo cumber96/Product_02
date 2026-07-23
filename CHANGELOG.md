@@ -11,6 +11,18 @@
 
 ### Changed
 
+- Home 화면 UI/UX 전면 개편. 상단을 프로필/파트너 카드 없이 "오늘 날짜 + 설정" 헤더로 단순화하고, 평균
+  통계 카드를 화면 폭 전체를 쓰는 Hero Card Carousel(생리 예정/배란 예정/가임기, 톤별 배경 틴트 + 큰
+  D-day + 페이지 인디케이터, 한 정보에 집중하도록 카드 1개씩 전환)로 교체. 캘린더가 Home의 핵심 콘텐츠로
+  배치되고, 오늘(점)/선택(Accent Ring)/생리기간(배경)/가임기(배경)/배란일(점)/사랑기록(순수 CSS 하트)/
+  캘린더 기록(점)이 서로 다른 시각 언어와 충분히 구분되는 크기로 재설계됨. 날짜를 탭하면 별도 화면 이동
+  없이 캘린더 아래에 해당 날짜의 조회 전용 요약이 펼쳐지고, 추가·수정은 이 프로젝트 최초의 Bottom Sheet
+  Component(입력 폼이 항상 먼저 보이는 구조)로 분리(Owner만 "기록 관리" 진입점 노출, 삭제는 폼 아래 작은
+  링크로만 존재해 상시 노출하지 않음) — 기존에 상시 노출되던 "새 기록 추가" 폼과 별도 Detail 화면을 대체.
+  "오늘 종료" 퀵액션은 폼의 종료일 직접 입력으로 대체되어 제거됨. Prediction/Calendar 계산 로직과 기록
+  저장 API는 변경 없음
+- Home에서 뺀 프로필(아바타/이름/Owner·Viewer 배지), 파트너 초대·연결 관리를 Settings 화면으로 이동.
+  Settings가 "앱 설정 + 계정 + 파트너 관리" 역할을 담당
 - Button Family를 Action Button(`.btn`)/Icon Button(`.icon-btn`, `.icon-btn.header`)/Text Button
   (`.text-btn`) 3개 구조로 정리. `.detail-header button`/`.calendar-header button`의 100% 중복 CSS를
   `.icon-btn.header` 하나로 통합하고, `.log-actions button`을 재사용 가능한 `.text-btn`으로 승격.
@@ -40,6 +52,8 @@
 
 ### Fixed
 
+- 사진이 없는 사용자의 아바타 이니셜 폴백에 크기·원형 테두리가 전혀 적용되지 않던 버그 수정
+  (`.avatar` 선택자가 `<img>` 태그로만 스코프돼 있어 `<div>` 폴백엔 미적용이었음)
 - 새 기록 추가 시 저장은 되지만 캘린더/목록이 즉시 갱신되지 않던 버그 수정 (`showToast` 함수 누락)
 - 기록 저장 시 앱 푸시가 중복 발송되던 버그 수정 (사용자당 누적된 구독을 정리하지 않던 문제)
 - `app.js`의 아바타 폴백/초대 코드 안내/예측 정보 빈 상태 문구가 존재하지 않는 CSS 변수(`--pink-light`, `--pink`, `--text-muted`)를 참조하던 버그 수정 — 실제 토큰(`--primary-disabled`, `--primary`, `--muted`)으로 연결

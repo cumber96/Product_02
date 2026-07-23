@@ -6,7 +6,6 @@ import {
   Bell,
   LogOut,
   UserPlus,
-  Sparkles,
   SquarePen,
   NotebookText,
   Heart,
@@ -14,6 +13,8 @@ import {
   CircleDashed,
   Circle,
   Egg,
+  User,
+  X,
 } from "./icons.js";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -31,10 +32,10 @@ const state = {
   logs: [],
   loveLogs: [],
   currentMonth: new Date(),
-  editingLogId: null,
   inviteResult: null,
   selectedDate: null,
   settingsOpen: false,
+  sheetOpen: false,
 };
 
 const appEl = document.getElementById("app");
@@ -158,17 +159,50 @@ async function handleGoogleCredential(response) {
   }
 }
 
-// ---------- App screen ----------
+// ---------- Home screen ----------
 async function renderApp() {
-  if (state.selectedDate) return renderDetailScreen();
   if (state.settingsOpen) return renderSettingsScreen();
 
+  appEl.innerHTML = `
+    <div class="home-header">
+      <div class="home-date">${formatLong(ymd(new Date()))}</div>
+      <button class="icon-btn" data-action="open-settings" aria-label="설정">${Settings()}</button>
+    </div>
+
+    ${renderPredictionCarousel()}
+    ${renderCalendarCard()}
+    ${renderSelectedDateDetail()}
+    ${renderSheet()}
+  `;
+
+  setupPredictionCarousel();
+}
+
+// ---------- Settings screen ----------
+async function renderSettingsScreen() {
+  const pushStatus = await getPushStatus();
   const { user, partnerConnected, partner } = state.me;
   const isOwner = user.role === "owner";
 
   appEl.innerHTML = `
-    <div class="topbar">
-      <div class="who">
+    <div class="detail-header">
+      <button class="icon-btn header" data-action="close-settings" aria-label="뒤로">${ArrowLeft()}</button>
+      <div class="detail-date">설정</div>
+    </div>
+    ${renderProfileCard(user, isOwner)}
+    ${isOwner ? renderInviteCard(partnerConnected) : renderPartnerCard(partner)}
+    ${renderNotificationSettingsCard(pushStatus)}
+    <div class="card">
+      <button class="btn ghost block" data-action="logout">${LogOut({ size: 20 })} 로그아웃</button>
+    </div>
+  `;
+}
+
+function renderProfileCard(user, isOwner) {
+  return `
+    <div class="card">
+      ${renderSectionHeader(User(), "프로필")}
+      <div class="profile-row">
         ${
           user.picture
             ? `<img class="avatar" src="${user.picture}" alt="">`
@@ -177,32 +211,10 @@ async function renderApp() {
               )}</div>`
         }
         <div>
-          <div class="name">${escapeHtml(user.name || user.email)}</div>
+          <div class="profile-name">${escapeHtml(user.name || user.email)}</div>
           <span class="role-badge ${isOwner ? "" : "viewer"}">${isOwner ? "owner" : "viewer"}</span>
         </div>
       </div>
-      <button class="icon-btn" data-action="open-settings" aria-label="설정">${Settings()}</button>
-    </div>
-
-    ${isOwner ? renderInviteCard(partnerConnected) : renderPartnerCard(partner)}
-    ${renderSummaryCard()}
-    ${renderCalendarCard()}
-    ${isOwner ? renderAddLogForm() : ""}
-  `;
-}
-
-// ---------- Settings screen ----------
-async function renderSettingsScreen() {
-  const pushStatus = await getPushStatus();
-
-  appEl.innerHTML = `
-    <div class="detail-header">
-      <button class="icon-btn header" data-action="close-settings" aria-label="뒤로">${ArrowLeft()}</button>
-      <div class="detail-date">설정</div>
-    </div>
-    ${renderNotificationSettingsCard(pushStatus)}
-    <div class="card">
-      <button class="btn ghost block" data-action="logout">${LogOut({ size: 20 })} 로그아웃</button>
     </div>
   `;
 }
@@ -270,37 +282,73 @@ function renderPartnerCard(partner) {
   return `<div class="card"><h2 class="section-header">아직 연결된 사용자가 없어요</h2></div>`;
 }
 
-function renderSummaryCard() {
+// ---------- Prediction Hero Carousel ----------
+function renderPredictionCarousel() {
   const p = state.prediction;
   if (!p || !p.hasData) {
     return `
-      <div class="card">
-        ${renderSectionHeader(Sparkles(), "예측 정보")}
-        <p style="font-size:13px;color:var(--color-text-secondary);margin:0">아직 기록이 없어요. 첫 생리 시작일을 기록하면 예측이 시작돼요.</p>
+      <div class="prediction">
+        <div class="prediction-empty">아직 기록이 없어요. 첫 생리 시작일을 기록하면 예측이 시작돼요.</div>
       </div>
     `;
   }
+
+  const slides = [
+    {
+      tone: "period",
+      label: "생리 예정",
+      dday: formatDday(p.nextPredictedStart),
+      date: formatShortWithWeekday(p.nextPredictedStart),
+    },
+    {
+      tone: "ovulation",
+      label: "배란 예정",
+      dday: formatDday(p.ovulationDate),
+      date: formatShortWithWeekday(p.ovulationDate),
+    },
+    {
+      tone: "ovulation",
+      label: "가임기",
+      dday: formatDday(p.fertileWindowStart),
+      date: formatShortWithWeekday(p.fertileWindowStart),
+      sub: `~ ${formatShort(p.fertileWindowEnd)}까지`,
+    },
+  ];
+
   return `
-    <div class="card">
-      ${renderSectionHeader(Sparkles(), "예측 정보")}
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="label">평균 생리주기</div>
-          <div class="value">${p.avgCycleLength}일</div>
-        </div>
-        <div class="summary-item">
-          <div class="label">평균 생리기간</div>
-          <div class="value">${p.avgPeriodLength}일</div>
-        </div>
-        <div class="summary-item">
-          <div class="label">마지막 생리일</div>
-          <div class="value">${formatShort(p.lastStartDate)}</div>
-        </div>
+    <div class="prediction">
+      <div class="prediction-track" tabindex="0" aria-label="예측 정보, 좌우로 넘겨보세요">
+        ${slides
+          .map(
+            (s) => `
+          <div class="prediction-slide tone-${s.tone}">
+            <div class="label">${s.label}</div>
+            <div class="dday">${s.dday}</div>
+            <div class="date">${s.date}</div>
+            ${s.sub ? `<div class="sub">${s.sub}</div>` : ""}
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+      <div class="prediction-dots">
+        ${slides.map((_, i) => `<span class="dot${i === 0 ? " active" : ""}"></span>`).join("")}
       </div>
     </div>
   `;
 }
 
+function setupPredictionCarousel() {
+  const track = document.querySelector(".prediction-track");
+  const dots = document.querySelectorAll(".prediction-dots .dot");
+  if (!track || !dots.length) return;
+  track.addEventListener("scroll", () => {
+    const index = Math.min(Math.round(track.scrollLeft / track.clientWidth), dots.length - 1);
+    dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+  });
+}
+
+// ---------- Calendar ----------
 function renderCalendarCard() {
   const year = state.currentMonth.getFullYear();
   const month = state.currentMonth.getMonth();
@@ -316,10 +364,12 @@ function renderCalendarCard() {
       <div class="weekday-row">${WEEKDAYS.map((w) => `<div>${w}</div>`).join("")}</div>
       <div class="calendar-grid">${cells.map(renderDayCell).join("")}</div>
       <div class="legend">
-        <span class="legend-period">${Droplet({ size: 16 })}생리 기록</span>
+        <span class="legend-period">${Droplet({ size: 16 })}생리기간</span>
         <span class="legend-predicted">${CircleDashed({ size: 16 })}예상 생리</span>
         <span class="legend-fertile">${Circle({ size: 16 })}가임기</span>
-        <span class="legend-ovulation">${Egg({ size: 16 })}배란 예상일</span>
+        <span class="legend-ovulation">${Egg({ size: 16 })}배란일</span>
+        <span class="legend-love">${Heart({ size: 16 })}사랑기록</span>
+        <span class="legend-record">${NotebookText({ size: 16 })}캘린더 기록</span>
       </div>
     </div>
   `;
@@ -333,7 +383,33 @@ function renderDayCell(cell) {
   if (cell.fertile) classes.push("fertile");
   if (cell.ovulation) classes.push("ovulation");
   if (cell.today) classes.push("today");
-  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}"><span class="num">${cell.day}</span></div>`;
+  if (cell.selected) classes.push("selected");
+  const markers =
+    (cell.love ? `<span class="cell-marker love"></span>` : "") +
+    (cell.hasNote ? `<span class="cell-marker record"></span>` : "");
+  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}"><span class="num">${cell.day}</span>${markers}</div>`;
+}
+
+// 생리/예상/가임기/배란/사랑기록/메모 여부를 하루 단위로 판정 — 캘린더 그리드와 Selected Date Detail이 동일 로직을 공유
+function classifyDate(dateStr) {
+  const coveringLog = state.logs.find((l) => dateStr >= l.start_date && dateStr <= (l.end_date || l.start_date));
+  const p = state.prediction;
+  const inPeriod = !!coveringLog;
+  const inPredicted =
+    p && p.hasData && p.nextPredictedStart && dateStr >= p.nextPredictedStart && dateStr <= p.predictedPeriodEnd;
+  const inFertile =
+    p && p.hasData && p.fertileWindowStart && dateStr >= p.fertileWindowStart && dateStr <= p.fertileWindowEnd;
+  const isOvulation = p && p.hasData && dateStr === p.ovulationDate;
+  const hasLove = state.loveLogs.some((l) => l.date === dateStr);
+
+  return {
+    period: inPeriod,
+    predicted: !inPeriod && inPredicted,
+    fertile: inFertile,
+    ovulation: isOvulation,
+    love: hasLove,
+    hasNote: !!(coveringLog && coveringLog.note),
+  };
 }
 
 function buildCalendarCells(year, month) {
@@ -342,174 +418,164 @@ function buildCalendarCells(year, month) {
   const startOffset = firstDay.getDay();
   const todayStr = ymd(new Date());
 
-  const periodRanges = state.logs.map((l) => [l.start_date, l.end_date || l.start_date]);
-  const p = state.prediction;
-
   const cells = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = ymd(new Date(year, month, d));
-    const inPeriod = periodRanges.some(([s, e]) => dateStr >= s && dateStr <= e);
-    const inPredicted =
-      p && p.hasData && p.nextPredictedStart && dateStr >= p.nextPredictedStart && dateStr <= p.predictedPeriodEnd;
-    const inFertile =
-      p && p.hasData && p.fertileWindowStart && dateStr >= p.fertileWindowStart && dateStr <= p.fertileWindowEnd;
-    const isOvulation = p && p.hasData && dateStr === p.ovulationDate;
-
     cells.push({
       day: d,
       date: dateStr,
-      period: inPeriod,
-      predicted: !inPeriod && inPredicted,
-      fertile: inFertile,
-      ovulation: isOvulation,
+      ...classifyDate(dateStr),
       today: dateStr === todayStr,
+      selected: dateStr === state.selectedDate,
     });
   }
   return cells;
 }
 
-function renderAddLogForm() {
-  return `
-    <div class="card">
-      ${renderSectionHeader(SquarePen(), "새 기록 추가")}
-      <form id="add-log-form">
-        <div class="form-row">
-          <label>시작일</label>
-          <input type="date" name="start_date" value="${ymd(new Date())}" required>
-        </div>
-        <div class="form-row">
-          <label>종료일 (선택)</label>
-          <input type="date" name="end_date">
-        </div>
-        <div class="form-row">
-          <label>메모 (선택)</label>
-          <input type="text" name="note" placeholder="컨디션, 복용 약물 등">
-        </div>
-        <button type="submit" class="btn block">기록 저장</button>
-      </form>
-    </div>
-  `;
-}
-
-// ---------- Detail screen ----------
+// ---------- Selected Date Detail (Home 인라인 Summary) ----------
 function findLogForDate(dateStr) {
   return state.logs.find((l) => dateStr >= l.start_date && dateStr <= (l.end_date || l.start_date)) || null;
 }
 
-async function renderDetailScreen() {
+function renderSelectedDateDetail() {
   const dateStr = state.selectedDate;
+  if (!dateStr) return "";
+
   const isOwner = state.me.user.role === "owner";
   const log = findLogForDate(dateStr);
   const loveLogsForDate = state.loveLogs.filter((l) => l.date === dateStr);
-
-  appEl.innerHTML = `
-    <div class="detail-header">
-      <button class="icon-btn header" data-action="close-detail" aria-label="뒤로">${ArrowLeft()}</button>
-      <div class="detail-date">${formatLong(dateStr)}</div>
-    </div>
-    ${renderDetailCycleSection(log, isOwner)}
-    ${renderDetailLoveSection(loveLogsForDate, isOwner)}
-  `;
-}
-
-function renderDetailCycleSection(log, isOwner) {
-  if (!log) {
-    return `
-      <div class="card">
-        ${renderSectionHeader(NotebookText(), "캘린더 기록")}
-        <div class="empty-state">이 날짜에 기록된 생리 기록이 없어요</div>
-      </div>
-    `;
-  }
-
-  if (isOwner && state.editingLogId === log.id) {
-    return `
-      <div class="card">
-        ${renderSectionHeader(NotebookText(), "캘린더 기록")}
-        <form id="edit-log-form" data-id="${log.id}">
-          <div class="form-row">
-            <label>시작일</label>
-            <input type="date" name="start_date" value="${log.start_date}" required>
-          </div>
-          <div class="form-row">
-            <label>종료일</label>
-            <input type="date" name="end_date" value="${log.end_date || ""}">
-          </div>
-          <div class="form-row">
-            <label>메모</label>
-            <input type="text" name="note" value="${escapeHtml(log.note || "")}">
-          </div>
-          <div style="display:flex;gap:8px">
-            <button type="submit" class="btn">저장</button>
-            <button type="button" class="btn ghost" data-action="cancel-edit">취소</button>
-          </div>
-        </form>
-      </div>
-    `;
-  }
+  const status = renderSelectedDateStatus(dateStr, log);
 
   return `
-    <div class="card">
-      ${renderSectionHeader(NotebookText(), "캘린더 기록")}
-      <div class="log-item">
+    <div class="card selected-date">
+      <div class="selected-date-head">
         <div>
-          <div class="dates">${formatShort(log.start_date)} ${log.end_date ? "~ " + formatShort(log.end_date) : "(진행중)"}</div>
-          ${log.note ? `<div class="note">${escapeHtml(log.note)}</div>` : ""}
+          <div class="home-date">${formatShort(dateStr)}</div>
+          ${status ? `<div class="selected-date-status">${status}</div>` : ""}
         </div>
-        ${
-          isOwner
-            ? `
-          <div class="log-actions">
-            ${!log.end_date ? `<button class="text-btn" data-action="quick-end" data-id="${log.id}">오늘 종료</button>` : ""}
-            <button class="text-btn" data-action="edit-log" data-id="${log.id}">수정</button>
-            <button class="text-btn delete" data-action="delete-log" data-id="${log.id}">삭제</button>
-          </div>
-        `
-            : ""
-        }
+        <button class="icon-btn" data-action="close-date" aria-label="닫기">${X()}</button>
       </div>
-    </div>
-  `;
-}
 
-function renderDetailLoveSection(loveLogsForDate, isOwner) {
-  const items = loveLogsForDate.length
-    ? loveLogsForDate
-        .map(
-          (l) => `
-        <div class="log-item">
-          <div class="note">${l.note ? escapeHtml(l.note) : "메모 없음"}</div>
-          ${
-            isOwner
-              ? `<div class="log-actions"><button class="text-btn delete" data-action="delete-love-log" data-id="${l.id}">삭제</button></div>`
-              : ""
-          }
-        </div>
-      `
-        )
-        .join("")
-    : `<div class="empty-state">이 날짜에 사랑기록이 없어요</div>`;
+      <div class="selected-date-row">
+        <div class="selected-date-row-label">${NotebookText({ size: 16 })} 캘린더 기록</div>
+        <div class="selected-date-row-value">${
+          log ? `${formatShort(log.start_date)}${log.end_date ? " ~ " + formatShort(log.end_date) : " ~ 진행중"}` : "기록 없음"
+        }</div>
+      </div>
+      ${
+        log && log.note
+          ? `
+      <div class="selected-date-row">
+        <div class="selected-date-row-label">메모</div>
+        <div class="selected-date-row-value">${escapeHtml(log.note)}</div>
+      </div>`
+          : ""
+      }
 
-  return `
-    <div class="card">
-      ${renderSectionHeader(Heart(), "사랑기록")}
-      ${items}
+      <div class="selected-date-row">
+        <div class="selected-date-row-label">${Heart({ size: 16 })} 사랑기록</div>
+        <div class="selected-date-row-value">${loveLogsForDate.length ? "있음" : "없음"}</div>
+      </div>
+
       ${
         isOwner
-          ? `
-        <form id="add-love-log-form" style="margin-top:${loveLogsForDate.length ? "12px" : "0"}">
-          <div class="form-row">
-            <label>메모 (선택)</label>
-            <input type="text" name="note" placeholder="오늘 있었던 일">
-          </div>
-          <button type="submit" class="btn block">사랑기록 추가</button>
-        </form>
-      `
+          ? `<button class="btn ghost block" data-action="open-sheet">${SquarePen({ size: 16 })} 기록 관리</button>`
           : ""
       }
     </div>
+  `;
+}
+
+function renderSelectedDateStatus(dateStr, log) {
+  if (log) {
+    const dayNum = Math.round((parseYmd(dateStr) - parseYmd(log.start_date)) / 86400000) + 1;
+    return `생리 ${dayNum}일째`;
+  }
+  const flags = classifyDate(dateStr);
+  if (flags.ovulation) return "배란 예상일";
+  if (flags.predicted) return "예상 생리 기간";
+  if (flags.fertile) return "가임기";
+  return "";
+}
+
+// ---------- Bottom Sheet (입력 중심: 추가/수정) ----------
+// Owner만 열 수 있는 화면(Selected Date Detail의 "기록 관리" 버튼도 Owner 전용) — 여기선 별도 권한 체크 안 함
+function renderSheet() {
+  if (!state.sheetOpen || !state.selectedDate) return "";
+  const dateStr = state.selectedDate;
+  const log = findLogForDate(dateStr);
+  const loveLogsForDate = state.loveLogs.filter((l) => l.date === dateStr);
+
+  return `
+    <div class="sheet-backdrop" data-action="close-sheet"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <div class="home-date">${formatShort(dateStr)} 기록 관리</div>
+        <button class="icon-btn" data-action="close-sheet" aria-label="닫기">${X()}</button>
+      </div>
+      <div class="selected-date-section">
+        ${renderCycleManageSection(dateStr, log)}
+      </div>
+      <div class="selected-date-section">
+        ${renderLoveManageSection(dateStr, loveLogsForDate)}
+      </div>
+    </div>
+  `;
+}
+
+// 기록이 있으면 그 값을 채운 수정 폼, 없으면 빈 추가 폼 — 항상 입력 폼이 먼저 보이고
+// 삭제는 폼 아래 작은 링크로만 존재(상시 노출되는 액션 버튼 행을 두지 않음)
+function renderCycleManageSection(dateStr, log) {
+  const subhead = `<div class="selected-date-subhead">${NotebookText({ size: 16 })} 캘린더 기록</div>`;
+
+  return `
+    ${subhead}
+    <form id="cycle-log-form" data-id="${log ? log.id : ""}">
+      <div class="form-row">
+        <label>시작일</label>
+        <input type="date" name="start_date" value="${log ? log.start_date : dateStr}" required>
+      </div>
+      <div class="form-row">
+        <label>종료일 (선택)</label>
+        <input type="date" name="end_date" value="${log && log.end_date ? log.end_date : ""}">
+      </div>
+      <div class="form-row">
+        <label>메모 (선택)</label>
+        <input type="text" name="note" value="${log ? escapeHtml(log.note || "") : ""}" placeholder="컨디션, 복용 약물 등">
+      </div>
+      <button type="submit" class="btn block">저장</button>
+    </form>
+    ${log ? `<button class="text-btn delete" data-action="delete-log" data-id="${log.id}">이 기록 삭제</button>` : ""}
+  `;
+}
+
+function renderLoveManageSection(dateStr, loveLogsForDate) {
+  const subhead = `<div class="selected-date-subhead">${Heart({ size: 16 })} 사랑 기록</div>`;
+  const items = loveLogsForDate
+    .map(
+      (l) => `
+      <div class="log-item">
+        <div class="note">${l.note ? escapeHtml(l.note) : "메모 없음"}</div>
+        <button class="text-btn delete" data-action="delete-love-log" data-id="${l.id}">삭제</button>
+      </div>
+    `
+    )
+    .join("");
+
+  return `
+    ${subhead}
+    <form id="add-love-log-form">
+      <div class="form-row">
+        <label>메모 (선택)</label>
+        <input type="text" name="note" placeholder="오늘 있었던 일">
+      </div>
+      <button type="submit" class="btn block">사랑기록 추가</button>
+    </form>
+    ${items ? `<div class="manage-list">${items}</div>` : ""
+    }
   `;
 }
 
@@ -534,23 +600,24 @@ async function onAppClick(e) {
   if (action === "create-invite") return handleCreateInvite();
   if (action === "copy-invite") return copyInviteUrl();
   if (action === "subscribe-push") return subscribeToPush();
-  if (action === "edit-log") {
-    state.editingLogId = btn.dataset.id;
+  if (action === "open-sheet") {
+    state.sheetOpen = true;
     return renderApp();
   }
-  if (action === "cancel-edit") {
-    state.editingLogId = null;
+  if (action === "close-sheet") {
+    state.sheetOpen = false;
     return renderApp();
   }
   if (action === "delete-log") return handleDeleteLog(btn.dataset.id);
-  if (action === "quick-end") return handleQuickEnd(btn.dataset.id);
   if (action === "open-date") {
-    state.selectedDate = btn.dataset.date;
-    state.editingLogId = null;
+    const date = btn.dataset.date;
+    state.selectedDate = state.selectedDate === date ? null : date;
+    state.sheetOpen = false;
     return renderApp();
   }
-  if (action === "close-detail") {
+  if (action === "close-date") {
     state.selectedDate = null;
+    state.sheetOpen = false;
     return renderApp();
   }
   if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
@@ -569,41 +636,30 @@ async function onAppSubmit(e) {
   const form = e.target.closest("form");
   if (!form) return;
   e.preventDefault();
-  if (form.id === "add-log-form") return handleAddLog(form);
-  if (form.id === "edit-log-form") return handleEditLog(form);
+  if (form.id === "cycle-log-form") return handleSaveCycleLog(form);
   if (form.id === "add-love-log-form") return handleAddLoveLog(form);
 }
 
-async function handleAddLog(form) {
+// 기록이 있으면(data-id 있음) 수정, 없으면 추가 — 하나의 폼/핸들러로 통일
+async function handleSaveCycleLog(form) {
+  const id = form.dataset.id;
   const fd = new FormData(form);
   const start_date = fd.get("start_date");
   const end_date = fd.get("end_date") || null;
   const note = fd.get("note") || null;
   if (!start_date) return;
   try {
-    await api("/api/cycles", { method: "POST", body: JSON.stringify({ start_date, end_date, note }) });
+    if (id) {
+      await api(`/api/cycles/${id}`, { method: "PATCH", body: JSON.stringify({ start_date, end_date, note }) });
+      showToast("기록을 수정했어요");
+    } else {
+      await api("/api/cycles", { method: "POST", body: JSON.stringify({ start_date, end_date, note }) });
+      showToast("기록을 추가했어요");
+    }
     await loadAppData();
-    showToast("기록을 추가했어요");
-    await renderApp();
-  } catch (err) {
-    showToast("추가 실패");
-  }
-}
-
-async function handleEditLog(form) {
-  const id = form.dataset.id;
-  const fd = new FormData(form);
-  const start_date = fd.get("start_date");
-  const end_date = fd.get("end_date") || null;
-  const note = fd.get("note") || null;
-  try {
-    await api(`/api/cycles/${id}`, { method: "PATCH", body: JSON.stringify({ start_date, end_date, note }) });
-    state.editingLogId = null;
-    await loadAppData();
-    showToast("기록을 수정했어요");
     await renderApp();
   } catch {
-    showToast("수정 실패");
+    showToast(id ? "수정 실패" : "추가 실패");
   }
 }
 
@@ -616,16 +672,6 @@ async function handleDeleteLog(id) {
     await renderApp();
   } catch {
     showToast("삭제 실패");
-  }
-}
-
-async function handleQuickEnd(id) {
-  try {
-    await api(`/api/cycles/${id}`, { method: "PATCH", body: JSON.stringify({ end_date: ymd(new Date()) }) });
-    await loadAppData();
-    await renderApp();
-  } catch {
-    showToast("업데이트 실패");
   }
 }
 
@@ -784,10 +830,32 @@ function ymd(date) {
   return `${y}-${m}-${d}`;
 }
 
+function parseYmd(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function diffDaysFromToday(dateStr) {
+  return Math.round((parseYmd(dateStr) - parseYmd(ymd(new Date()))) / 86400000);
+}
+
+function formatDday(dateStr) {
+  if (!dateStr) return "-";
+  const diff = diffDaysFromToday(dateStr);
+  if (diff === 0) return "D-Day";
+  return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+}
+
 function formatShort(dateStr) {
   if (!dateStr) return "-";
   const [, m, d] = dateStr.split("-");
   return `${Number(m)}월 ${Number(d)}일`;
+}
+
+function formatShortWithWeekday(dateStr) {
+  if (!dateStr) return "-";
+  const [, m, d] = dateStr.split("-");
+  return `${Number(m)}월 ${Number(d)}일 (${WEEKDAYS[parseYmd(dateStr).getDay()]})`;
 }
 
 function formatLong(dateStr) {

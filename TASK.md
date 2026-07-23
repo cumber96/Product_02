@@ -1,7 +1,257 @@
 # Current Task
 
 ## Goal
-반복되는 "Icon + Title" 패턴(Section Header)을 하나의 Component(JS Helper + CSS Class)로 통합해
+직전 Home 개편(카드 재배치 수준)을 한 단계 더 밀어붙여 Home을 처음부터 새로 디자인한다: Prediction을
+Hero Card Carousel로, Calendar 마커를 오늘/선택/생리기간/가임기/배란일/사랑기록/캘린더기록이 서로 다른
+시각 언어(점/링/배경/하트/점 등)를 갖도록 재설계, Selected Date Detail을 조회 전용 Summary로 바꾸고
+수정·삭제·추가는 이 프로젝트 최초의 Bottom Sheet Component로 분리. Detail 화면(이미 지난 Sprint에서
+제거)은 이번에 최종적으로 완전히 정리. Settings 구조(Profile→Partner→Notification→Logout)는 유지.
+
+## Background
+직전 Sprint에서 Home을 카드 재배치 수준으로만 개편했는데, 이번엔 "재배치가 아니라 전체를 새로 디자인"
+하라는 지시. 특히 Selected Date Detail에 CRUD를 그대로 두지 말고 조회 전용으로 바꾸고 Bottom Sheet로
+분리하라는 것과, 캘린더 마커가 의미별로 겹치지 않게 서로 다른 시각 언어를 가져야 한다는 것이 이번 핵심.
+
+## Scope
+- Prediction: 슬라이드 1개가 화면의 88%를 차지하는 Hero Card로 확대(톤별 배경 틴트, 큰 D-day, 요일 포함
+  날짜, 페이지 인디케이터)
+- Calendar: 오늘=작은 dot(기존 ring에서 변경), 선택=Accent Ring(오늘이 쓰던 자리 이어받음), 생리기간=배경
+  채움(기존 유지), 가임기=셀 배경(기존 유지), 배란일=점(기존 유지), 사랑기록=순수 CSS로 그린 하트 모양
+  (Lucide 아이콘 아님 — DESIGN.md §5 "셀 안 마킹은 아이콘으로 바꾸지 않는다" 준수), 캘린더 기록(메모
+  존재)=새 점 마커. Legend에 "캘린더 기록" 항목 추가, "예상 생리"는 기존 기능이라 유지
+- Selected Date Detail: 조회 전용 Summary(날짜/상태/캘린더 기록 요약/메모/사랑기록 유무)로 축소, 삭제
+  버튼 상시 노출 금지. Owner에게만 "기록 관리" 진입점 제공
+- 신규 Bottom Sheet Component(`.sheet`/`.sheet-backdrop`): 기존 CRUD 로직(수정/삭제/오늘종료/사랑기록
+  추가삭제)을 그대로 이 안으로 이동. 이 프로젝트 최초의 modal형 Component — DESIGN.md §10 Motion 규정
+  (150~250ms ease-out)을 처음으로 실제 적용
+- **절대 변경 금지 재확인**: Prediction API, 생리/Calendar 계산 로직, 기록 저장 방식, 데이터 모델, 상태
+  관리 패턴(단순 mutate+재렌더) — `functions/`, `migrations/` 등 diff 0 유지
+
+## Definition of Done
+- Home 4개 섹션(Header/Prediction/Calendar/Selected Date Detail) 전부 새 디자인 반영
+- Selected Date Detail에 삭제 버튼이 상시 노출되지 않음, 모든 CRUD는 Bottom Sheet 안에서만
+- 캘린더 7개 상태(오늘/선택/생리기간/가임기/배란일/사랑기록/캘린더기록)가 서로 다른 시각 표현
+- 데이터 모델에 없는 필드(양/통증/증상)를 새로 만들지 않음 — 실제 필드(기간/메모)만 표시
+- 코드 검증(문법/중괄호/미정의 var) 통과, 백엔드 diff 0
+- TASK.md, CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, 로컬 검증까지(배포는 별도 지시 시 진행). CHANGELOG.md는 직전 Home 개편 항목을 최신 상태로
+갱신(중간 단계가 배포된 적이 없어 별도 항목을 추가하지 않고 하나의 Unreleased 항목을 최종형으로 수정).
+
+### 변경 파일
+`app.js`(대폭 재작성), `style.css`(+272/-18줄), `icons.js`(변경 없음, 직전 Sprint에 추가한 `User`/`X`
+재사용). `functions/`, `migrations/` 등 백엔드·데이터 계층은 이번에도 diff 0.
+
+### 데이터 모델에 없는 요소를 어떻게 처리했는지 (재확인)
+와이어프레임의 "생리/보통, 통증/약함, 증상/두통"은 `cycle_logs`에 없는 필드라 만들지 않았고, 실제 필드
+(기간, 메모)만 Summary에 표시. "사랑기록"은 wireframe 그대로 "있음/없음"으로 단순 표시(개수까지는 굳이
+안 보여줌 — Summary는 조회 중심이라는 원칙에 맞춰 최소 정보만).
+
+### 캘린더 마커 설계 (겹치지 않는 시각 언어)
+| 상태 | 표현 | 위치/방식 |
+|---|---|---|
+| 오늘 | 작은 점(뉴트럴) | 셀 상단 중앙 |
+| 선택 | Accent Ring | 숫자 원 둘레 |
+| 생리기간 | 배경 채움(브랜드 핑크) | 숫자 원 |
+| 예상 생리 | 점선 테두리 + 옅은 채움 | 숫자 원 (기존 기능 유지) |
+| 가임기 | 배경 톤 | 셀 전체 |
+| 배란일 | 작은 점(보라) | 셀 하단 중앙 |
+| 사랑기록 | 순수 CSS 하트(원 2개+45도 정사각형) | 셀 우측 상단 |
+| 캘린더 기록(메모) | 작은 점(뉴트럴) | 셀 좌측 하단 |
+
+Lucide 아이콘을 셀 안에 쓰지 않는 DESIGN.md §5 원칙을 지키기 위해 사랑기록은 아이콘이 아니라 CSS 도형으로
+구현. `.day-cell`은 이미 `::before`(오늘)/`::after`(배란일)를 쓰고 있어, 사랑기록·기록 마커는 pseudo-element
+슬롯 부족으로 실제 `<span class="cell-marker">` 엘리먼트를 추가해 렌더링.
+
+### Bottom Sheet (신규 Component)
+`.sheet-backdrop`/`.sheet` — 이 프로젝트 최초의 modal형 Component. `state.sheetOpen`으로 제어, 기존
+CRUD 로직(수정/삭제/오늘종료/사랑기록 추가삭제)을 100% 재사용해 이 안으로 이동. `animation: sheet-up
+200ms ease-out`으로 DESIGN.md §10 Motion 규정(150~250ms ease-out)을 처음으로 실제 적용.
+
+### 검증
+- `node --check app.js` 통과, CSS 중괄호 112/112, 미정의 `var()` 참조 0
+- `.day-cell.today`가 더 이상 `.num`에 ring을 쓰지 않음(선택 상태만 ring 사용) 확인
+- `git diff --stat`으로 `functions/`·`migrations/` 등 무변경 확인
+- 브라우저 실사용 확인은 **미실시** — 특히 Hero Carousel 스와이프 폭 계산, 캘린더의 초소형 마커(4~5px)
+  가독성, Bottom Sheet 애니메이션은 실제 화면에서 꼭 확인 필요
+
+### 후속 수정 (사용자 피드백 3건 반영, 이번에 배포)
+1. **Prediction Hero Card 100% 폭으로 되돌림** — 88%(다음 카드 peek 구조) → 100%(정보 하나에만 집중).
+   `.prediction-slide`의 `margin-right` 제거, `scroll-snap-align: start` → `center`. 인디케이터 계산도
+   `track.clientWidth` 기준 원복
+2. **Bottom Sheet를 입력 중심으로 재구성** — 조회(읽기 전용 뷰 + 수정/삭제/오늘종료 버튼 행) 방식을 버리고,
+   기록이 있으면 값이 채워진 수정 폼을, 없으면 빈 추가 폼을 **항상 먼저** 보여주는 구조로 변경.
+   `add-log-form`/`edit-log-form` 2개였던 폼을 `cycle-log-form` 1개로 통합(`data-id` 유무로 추가/수정
+   분기), `handleAddLog`/`handleEditLog`도 `handleSaveCycleLog` 하나로 병합. 삭제는 폼 아래 작은
+   `.text-btn.delete` 링크로만 존재(Save와 동일한 무게로 상시 노출하지 않음). 사랑기록 섹션도 추가
+   폼을 목록보다 먼저 배치. **"오늘 종료" 퀵액션은 제거** — 입력 폼의 종료일 필드에 날짜를 직접
+   입력하는 것으로 대체(입력 중심 원칙과 직결되는 의도적 단순화, 기능 자체는 폼으로 그대로 가능)
+3. **캘린더 마커 확대** — 오늘 4→6px, 배란일 5→7px, 캘린더기록(메모) 5→7px, 사랑기록 하트 lobe
+   4→6px(하트 전체 바운딩 박스 약 6×6px → 9×9px)
+4. (부수 정리) 더 이상 쓰이지 않는 `state.editingLogId`/`state.addingLogForDate`와 관련 action
+   6개(`edit-log`/`cancel-edit`/`start-add-log`/`cancel-add-log`/`quick-end`) 제거 — 입력 중심 구조에서
+   자연히 불필요해진 상태/분기라 함께 정리
+
+이번 요청에 "배포는 하지 않습니다" 문구가 없어 배포까지 진행 — 아래 배포 기록 참고.
+
+---
+
+# Current Task (직전 완료분: Home 화면 UI 개편 구현)
+
+## Goal
+직전 UI Audit 결과를 바탕으로 Home 화면을 실제로 리디자인 구현한다(Header/Prediction/Calendar/Selected
+Date Detail). 기존 기능(Prediction API, Calendar 계산, 예측 로직, 기록 저장, 상태 관리 방식)은 변경하지
+않고 UI/레이아웃만 새로 설계. Settings에는 Home에서 뺀 Owner/Viewer·Profile·Partner 관리를 이동.
+
+## Background
+직전 UI Audit에서 Home이 P1(초대+통계+캘린더+기록추가 4개 목적이 뒤섞임)으로 지목됐고, 이번이 그 개편
+Sprint. 구현 착수 전 가장 큰 구조적 결정(캘린더에서 날짜 탭 시 별도 Detail 화면으로 이동할지, Home에
+완전히 흡수할지)이 지시사항만으로는 확정되지 않아 사용자에게 확인 — **"Home에 완전 흡수"**로 확정받고 진행.
+
+## Scope
+- `app.js`: Home을 Header(오늘 날짜+설정 아이콘)/Prediction Carousel(스와이프 3슬라이드+인디케이터)/
+  Calendar(+사랑기록·선택 마커 추가)/Selected Date Detail(인라인, 기존 Detail 화면 기능 전부 흡수)로 재구성.
+  기존 `renderDetailScreen()`(전체화면 라우팅) 제거, `renderSummaryCard()`/`renderAddLogForm()`(상시 노출
+  하단 폼) 제거하고 기능을 흡수. Settings에 Profile/Partner 카드 신설(기존 renderInviteCard/
+  renderPartnerCard 로직 그대로 이동)
+- `style.css`: `.topbar` 계열 제거 후 `.home-header`/`.prediction-*`/`.selected-date-*` 신설, `.avatar`
+  선택자를 `.topbar img.avatar`에서 일반화(부수 효과로 폴백 아바타 크기 누락 버그도 함께 수정)
+- `icons.js`: `User`, `X` 아이콘 추가(Lucide 표준 경로, 기존 `icon()` 헬퍼 재사용 — 새 Component/Token
+  아님, DESIGN.md §5가 이미 허용하는 절차)
+- Calendar 계산 로직은 `classifyDate()`로 추출만 하고 비교식은 완전히 동일하게 유지(중복 제거 목적,
+  로직 변경 아님)
+- **금지 확인**: Prediction API/Calendar 계산/예측 로직/기록 저장 방식/DB 구조/상태 관리 패턴(단순
+  mutate+재렌더) 변경 없음. `functions/`, `migrations/`, `wrangler.toml`, `index.html`, `manifest.json`
+  전부 무변경
+
+## Definition of Done
+- Home이 Header/Prediction/Calendar/Selected Date Detail 4개 섹션으로 구성
+- Settings에 Profile/Partner 관리 이동, 기존 알림/로그아웃 기능 무변경
+- 기존 CRUD(생리기록 추가·수정·삭제·오늘종료, 사랑기록 추가·삭제) 전부 인라인에서 동일하게 동작
+- `functions/`·`migrations/` 등 백엔드·데이터 계층 diff 0
+- CSS 중괄호 균형, 미정의 var() 참조 없음, 제거 대상 클래스 잔존 0
+- TASK.md, CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, 로컬 검증까지(배포는 별도 지시 시 진행). CHANGELOG.md 갱신 포함.
+
+### 변경 파일
+`app.js`(+387/-166줄 수준 재구성), `style.css`(+148/-18줄 수준), `icons.js`(+4줄, `User`/`X` 아이콘).
+`functions/`, `migrations/`, `index.html`, `manifest.json`, `wrangler.toml`은 전부 무변경(diff 0 확인).
+
+### 판단이 필요했던 지점(결정 내용)
+1. **Detail 화면 흡수 여부** — 사용자 확인 결과 "Home에 완전 흡수"로 확정. `renderDetailScreen()`(뒤로가기
+   있는 전체화면)을 제거하고, `state.selectedDate`가 이제 "Home 안에서 펼쳐진 날짜"를 의미하도록 재정의.
+   같은 날짜를 다시 탭하면 접힘(토글).
+2. **"생리 기록 - 양/통증/증상"(와이어프레임 예시)** — `cycle_logs` 테이블엔 `start_date`/`end_date`/
+   `note`만 존재(양·통증·증상 필드 없음). "기록 저장 방식 변경 금지" 원칙에 따라 새 필드를 만들지 않고,
+   실제 존재하는 값(기간, 메모)만 표시하도록 구성. 신규 필드가 필요하면 별도 스키마 변경 작업으로 분리 필요.
+3. **와이어프레임의 별도 "메모" 섹션** — 이 앱엔 "생리 기록과 무관한 날짜별 메모" 개념 자체가 없음(메모는
+   캘린더 기록에 속한 필드). 새 테이블 없이 캘린더 기록 섹션의 기존 `note` 표시로 대체, 별도 섹션 만들지 않음.
+4. **상시 노출 "새 기록 추가" 카드 제거** — Home 우선순위 감사에서 지적한 "기록 추가 진입점이 캘린더 탭과
+   분리돼 있다" 문제를 해결하기 위해, 캘린더에서 날짜를 탭했을 때 그 날짜를 시작일 기본값으로 하는 인라인
+   추가 폼(빈 상태의 "추가" 버튼)으로 대체. `POST /api/cycles` 호출 자체는 완전히 동일, 진입 UI만 변경.
+5. **사랑기록 캘린더 마커 색상** — 새 Color Token을 못 만들어서, 브랜드/가임기/배란 색과 겹치지 않는
+   중립색(`--color-text-primary`)의 작은 점으로 표현(우측 상단). Legend에서 Heart 아이콘으로 의미 설명.
+6. **가임기 D-day 색상** — `--color-fertile`은 옅은 배경 전용 톤이라 텍스트로 쓰기엔 대비가 부족해서,
+   기존에도 `legend-fertile` 아이콘이 그래왔듯 `--color-ovulation`(진보라)을 재사용. 새 토큰 없음.
+
+### 부수 발견 & 수정
+- `.avatar` 선택자가 원래 `.topbar img.avatar`로 스코프돼 있어, 사진 없는 사용자의 이니셜 폴백(`<div
+  class="avatar">`)에는 크기·원형 radius가 전혀 적용되지 않던 버그가 있었음(이전 대화에서 Component
+  Inventory 조사 때 발견해뒀던 항목). 이번에 아바타를 Settings로 옮기며 선택자를 `.avatar`로 일반화해
+  자연스럽게 함께 수정됨.
+
+### 검증
+- `node --check app.js` / `node --check icons.js` 통과
+- CSS 중괄호 92/92, 미정의 `var()` 참조 0, 제거 대상 클래스(`.topbar`, `.summary-grid`, `.summary-item`)
+  잔존 0
+- `renderDetailScreen`/`renderSummaryCard`/`renderAddLogForm`/`close-detail` 등 옛 함수·액션 잔존 0
+- `git diff --stat`으로 `functions/`·`migrations/` 등 백엔드 파일 변경 없음 확인
+- 브라우저 실사용 확인은 **미실시**
+
+---
+
+# Current Task (직전 완료분: UI Audit)
+
+## Goal
+개별 Component System 정리를 잠시 중단하고, 서비스 전반의 UI Audit(화면 구조/정보 위계/핵심 행동/사용자
+흐름/개편 우선순위)을 수행한다. **구현 아님 — 조사와 제안만.**
+
+## Background
+Typography/Spacing/Radius/Color/Button Family/Section Header까지 Foundation·Component 단위 정리가
+끝났고, 이제 화면 단위(코드 품질이 아니라 실제 사용자가 보는 구조/경험) UI 개편으로 전환하는 시점.
+
+## Scope
+- `app.js`의 실제 라우팅(상태 기반 화면 전환)과 렌더 함수를 기준으로 전체 화면 목록 확정
+- 화면별 12개 항목(목적/핵심 정보/핵심·보조 행동/Section/Card 수/반복 UI/시각 강조/실제 강조돼야 할 것/
+  불필요 요소/화면 간 불일치/모바일 이슈) 조사
+- 핵심 사용자 흐름 7개(오늘 상태 확인, 캘린더 확인, 생리기록 추가, 사랑기록 추가, 날짜 상세 확인, 설정
+  변경, 파트너 초대/연결 확인) 단계별 조사
+- UI 밀도/정보 위계, 디자인 시스템 활용도, 개편 우선순위(P1~P3), UI 개편 원칙 초안(10항목) 정리
+- **금지**: `style.css`/`app.js`/`DESIGN.md`/`CHANGELOG.md` 수정, 새 Component/Token 구현, 화면 구조·
+  UI 문구 변경. 이 TASK.md에만 기록
+
+## Definition of Done
+- 실제 코드 기준 화면 목록이 사용자가 제시한 예상 후보 목록과 다르면 그 차이를 명시(추측 아님)
+- 화면별 12개 항목 전부 코드 근거와 함께 정리
+- 우선순위·개편 원칙·구현 순서 제시
+- 코드 변경 0건
+
+## Result
+
+### Status
+✅ 조사·분석 완료. 코드 변경 없음(`git status` 클린 확인). 전체 상세 내용은 대화 응답 참고, 핵심만 기록.
+
+### 실제 화면 구조(예상 후보와 차이)
+사용자가 제시한 "로그인/홈/캘린더/날짜 상세/생리기록 추가·수정/사랑기록 추가·수정/설정/초대·파트너/빈
+상태/로딩" 10개 후보와 달리, `app.js`엔 클라이언트 라우터가 없고 `state.selectedDate`/`state.settingsOpen`
+플래그로만 분기하는 **실제 최상위 화면은 5개**(Loading/Login/Home/Settings/Detail)뿐. "캘린더"는 Home
+안의 Card, "생리기록 추가"는 Home 하단 폼, "수정"은 Detail 내 상태 토글, "사랑기록 추가"는 Detail 내 폼,
+"초대/파트너"는 Home 최상단 Card, "빈 상태"는 화면이 아니라 4곳에 흩어진 조건부 렌더 — 전부 독립 화면이
+아니라 5개 화면 안의 Card/상태 분기임.
+
+### 화면별 핵심 문제(요약)
+- **Home**: Card 최대 4장(초대/파트너 + 요약 + 캘린더 + 기록추가)이 동일한 시각적 무게로 세로 나열,
+  Primary Action이 화면 맨 아래(새 기록 추가)에 있어 One Primary Action 원칙과 약하게 어긋남, "오늘
+  기준 상태"를 한 문장으로 알려주는 요소가 없음(평균/예측 통계만 있고 실제 오늘 상태 요약 부재)
+- **Detail**: 생리기록은 수정 가능한데 사랑기록은 수정 기능 자체가 없음(비대칭), 캘린더 범례에 대응하는
+  설명이 이 화면엔 없어 마킹 의미를 재확인할 수 없음
+- **Settings**: 문제 거의 없음, Card+Section Header 패턴 가장 일관적
+- **Login**: Card를 안 쓰는 유일한 화면(구조적 예외), Google 버튼이 검정 테마라 브랜드 Accent Color가
+  전혀 안 보임
+- **Loading**: Settings 진입 시 `getPushStatus()` 대기 동안 이 컴포넌트가 재사용되지 않아 화면 전환
+  지연이 일관되지 않게 느껴질 수 있음
+
+### 핵심 흐름 문제
+- 생리기록 추가(Home 하단 폼)와 사랑기록 추가(Detail 폼)의 **진입 동선이 완전히 다름** — 같은 성격의
+  "날짜 기반 기록"인데 하나는 홈에서, 하나는 상세 화면에서만 가능
+- 캘린더에서 날짜를 탭해 Detail로 가도 "이 날짜부터 생리 기록을 시작"하는 액션이 없음(항상 오늘 날짜
+  기본값의 Home 폼으로 가야 함)
+- 파트너 연결 완료 시 초대 카드가 조용히 사라질 뿐, 명시적 "연결 완료" 피드백이 없음
+
+### 개편 우선순위
+Home = **P1**(빈도·가치·문제 크기·파급력 전부 최고), Detail = P2, Settings/Login/Loading = P3.
+**가장 먼저 개편할 화면: Home** — 매일 진입하는 시작 화면이자 Detail/Settings 진입점이라 파급 효과가
+가장 크고, DESIGN.md의 One Primary Action/실제 기록 우선 원칙과 가장 크게 어긋나 있음.
+
+### UI 개편 원칙 초안(10항목, 상세는 대화 응답)
+핵심 정보 우선(오늘 상태를 최상단에) / 화면당 Primary Action 1개 / Card 위계 표현(신규 토큰 없이 surface
+soft·strong 재배치) / Section 목적 단일화 / Accent는 Action에만, 위계는 구조·여백으로 / 목적이 다른 Card
+그룹 사이 여백 확대 / 캘린더 범례를 다른 화면에서도 재노출 / 같은 성격 기록의 추가 진입점 통일 / 상세
+화면은 기록 유형 간 CRUD 수준 대칭 / 설정은 파괴적 행동을 과장하지 않음.
+
+### Foundation/Component 활용도
+Typography/Spacing/Radius/Color/Icon/Button Family/Section Header — 전부 화면 전반에 이미 일관 적용돼
+있어 개편 시 그대로 재사용 가능. 재설계가 필요한 건 Foundation이 아니라 **Card의 시각적 위계 표현
+(variant 없음)**과 **Home의 정보 배치 순서** 자체.
+
+--- 하나의 Component(JS Helper + CSS Class)로 통합해
 중복 마크업/CSS를 제거한다. 새 디자인 아님 — 현재 UI 그대로, 구조만 정리.
 
 ## Background
