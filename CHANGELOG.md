@@ -24,6 +24,11 @@
 
 - 새 기록 추가 시 저장은 되지만 캘린더/목록이 즉시 갱신되지 않던 버그 수정 (`showToast` 함수 누락)
 - 기록 저장 시 앱 푸시가 중복 발송되던 버그 수정 (사용자당 누적된 구독을 정리하지 않던 문제)
+- `app.js`의 아바타 폴백/초대 코드 안내/예측 정보 빈 상태 문구가 존재하지 않는 CSS 변수(`--pink-light`, `--pink`, `--text-muted`)를 참조하던 버그 수정 — 실제 토큰(`--primary-disabled`, `--primary`, `--muted`)으로 연결
+
+### Removed
+
+- `style.css`에서 사용되지 않던 Color Token 3개 제거 (`--body-text`, `--muted-soft`, `--border-strong`)
 
 ---
 
