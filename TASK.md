@@ -123,8 +123,8 @@ diff 0 확인 — 새 아이콘 추가 없음, `classifyDate()`/`buildCalendarCe
 - **실기기 실사용 테스트는 미실시** — 아래 Known Issue 참고
 
 ### 배포
-✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
-원격 D1 작업 불필요.
+✅ 커밋 `50faadc`, `origin/main`으로 push 완료. Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB
+마이그레이션 없어 원격 D1 작업 불필요.
 
 ---
 
