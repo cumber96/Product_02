@@ -118,8 +118,9 @@ iOS Settings 대비 무겁다는 피드백.
   시 알려주면 반영 가능
 
 ### 배포
-✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
-원격 D1 작업 불필요.
+✅ 커밋 `653d592`, `origin/main`으로 push 완료. Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB
+마이그레이션 없어 원격 D1 작업 불필요. (push 시 GitHub 저장소가 `product_02` → `Product_02`로 리네임된
+안내 메시지가 떴으나 기존 remote URL로도 정상 push됨 — 원격 URL은 그대로 두었음)
 
 ---
 
