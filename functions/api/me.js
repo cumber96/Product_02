@@ -10,9 +10,16 @@ export async function onRequestGet(context) {
     .bind(user.id)
     .first();
 
+  const unreadRow = await env.DB.prepare(
+    "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0"
+  )
+    .bind(user.id)
+    .first();
+
   return json({
     user: { id: user.id, email: user.email, name: user.name, picture: user.picture, role: user.role },
     partnerConnected: !!partner,
     partner: partner || null,
+    unreadNotifications: unreadRow ? unreadRow.count : 0,
   });
 }

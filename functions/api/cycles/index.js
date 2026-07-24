@@ -44,9 +44,12 @@ export async function onRequestPost(context) {
 
   context.waitUntil(
     notifyPartner(env, user.id, {
+      type: "cycle_created",
       title: "생리주기 기록 업데이트",
       body: `${user.name}님이 새 기록을 남겼어요 (${start_date} 시작)`,
       url: "/",
+      relatedDate: start_date,
+      relatedRecordId: id,
     })
   );
 

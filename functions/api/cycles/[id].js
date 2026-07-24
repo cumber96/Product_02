@@ -44,9 +44,12 @@ export async function onRequestPatch(context) {
 
   context.waitUntil(
     notifyPartner(env, user.id, {
+      type: "cycle_updated",
       title: "생리주기 기록 수정됨",
       body: `${user.name}님이 기록을 수정했어요 (${start_date} 시작)`,
       url: "/",
+      relatedDate: start_date,
+      relatedRecordId: params.id,
     })
   );
 
@@ -61,13 +64,20 @@ export async function onRequestDelete(context) {
     return json({ error: "forbidden" }, { status: 403 });
   }
 
+  const existing = await env.DB.prepare("SELECT start_date FROM cycle_logs WHERE id = ?")
+    .bind(params.id)
+    .first();
+
   await env.DB.prepare("DELETE FROM cycle_logs WHERE id = ?").bind(params.id).run();
 
   context.waitUntil(
     notifyPartner(env, user.id, {
+      type: "cycle_deleted",
       title: "생리주기 기록 삭제됨",
       body: `${user.name}님이 기록을 삭제했어요`,
       url: "/",
+      relatedDate: existing ? existing.start_date : null,
+      relatedRecordId: params.id,
     })
   );
 

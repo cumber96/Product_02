@@ -1,6 +1,142 @@
 # Current Task
 
 ## Goal
+1. Prediction Carousel Shadow 잘림 및 시각 통일 (Hero/Calendar와 동일한 Shadow 언어로 재통일)
+2. 앱 푸시 알림 히스토리 저장 및 알림함 조회 구현 (D1 `notifications` 테이블 신규 추가)
+
+Owner/Viewer 모두 적용.
+
+## Background
+직전 Sprint(바로 아래 "Current Task (직전 완료분)")에서 Prediction Carousel에 Hero/Calendar보다 한 단계
+약한 `--shadow-2`를 의도적으로 도입했는데, 실사용 QA에서 (1) Hero/Calendar와 시각적으로 다르게 보이고
+(2) `.prediction-track`이 `overflow-x: auto`만 지정돼 있어 CSS 스펙상 `overflow-y`가 자동으로 `auto`로
+강제되면서 카드 위아래 Shadow가 잘려 보이는 문제가 함께 확인됨. 이번 작업에서 `--shadow-2` 도입 결정을
+번복하고 `--shadow-1`로 통일한다.
+
+알림함은 이전 Sprint에서 저장 백엔드가 없어 항상 빈 상태만 보여주도록 구현해뒀던 부분(`app.js` 주석에
+연동 지점 명시됨)을 이번에 실제로 구현한다. 프로젝트 실제 스택은 Cloudflare D1(Supabase 아님, 세션 쿠키
+기반 커스텀 인증) — 최초 지시사항의 Supabase/RLS는 실제 스택과 맞지 않아 사용자 확인 후 D1 확장 방식으로
+결정됨(RLS 없이 기존 관례대로 Functions API 레이어에서 `user_id` 기준 접근 제어).
+
+## Scope
+- **Prediction Carousel**: `.prediction-slide` box-shadow를 `--shadow-2` → `--shadow-1`로 변경(Hero/
+  Calendar와 동일 토큰). `.prediction-track`에 상하 padding을 추가해 shadow가 스크롤 컨테이너 경계에
+  잘리지 않게 하고, 늘어난 만큼 음수 margin으로 상쇄해 카드 간격/전체 높이는 유지. 가로 스크롤/다음 카드
+  일부 노출/스크롤바 숨김은 유지. 카드별 배경색 없음 유지
+- **Notification History**: D1에 `notifications` 테이블 신규 추가(`migrations/0003_notifications.sql`).
+  기존 `notifyPartner`/`notifyUser`(`functions/_lib/push.js`) 발송 흐름에서 푸시 발송과 같은 트랜잭션으로
+  알림 레코드 저장(구독 여부와 무관하게 항상 저장 — 앱이 꺼져있거나 푸시 미설정이어도 알림함에서 조회
+  가능해야 함). `GET /api/notifications`(본인 알림만, 최신순), `POST /api/notifications/read`(본인 알림
+  일괄 읽음 처리) 신규 엔드포인트 추가. `app.js` 알림함 화면을 실제 데이터 연동(로딩/에러/빈 상태 포함)으로
+  교체, Bell 아이콘에 안 읽은 알림 Dot 표시(`/api/me` 응답에 unread count 포함)
+- **절대 변경 금지**: 기존 푸시 발송 트리거 지점(`cycles`/`love-logs` API)의 권한 로직, 예측 계산 로직
+  (`functions/_lib/prediction.js`), Calendar 셀 구조는 변경하지 않음(payload에 `type`/관련 필드만 추가)
+
+## Definition of Done
+- Hero/Prediction/Calendar 세 Surface의 box-shadow 값이 동일(`--shadow-1`)
+- 좁은 화면 포함 카드 위아래 Shadow가 잘리지 않음, 가로 스크롤/다음 카드 peek 유지
+- 푸시 발송 시 DB에 알림 레코드가 남고, 앱 종료/재실행 후에도 알림함에서 과거 알림 조회 가능
+- Owner/Viewer 각각 본인에게 온 알림만 조회(교차 조회 불가)
+- 클라이언트가 임의로 다른 사용자 명의 알림을 생성할 수 없음(서버 로직에서만 생성)
+- Bell 아이콘 unread dot, 알림함 읽음 처리, 빈 상태/로딩/에러 상태 정상 동작
+- Console Error 없음(Owner/Viewer 모두)
+- 배포(Cloudflare Pages) 완료, 원격 D1 마이그레이션 적용, TASK.md/CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, QA 통과, 배포 완료(Cloudflare Pages Git 연동, 원격 D1 마이그레이션 적용).
+
+### 변경 파일
+- `style.css`, `app.js` — Prediction Carousel Shadow/Padding, 알림함 UI, Bell unread dot
+- `functions/_lib/push.js` — 알림 저장 로직 추가(`saveNotification`)
+- `functions/api/cycles/index.js`, `functions/api/cycles/[id].js`, `functions/api/love-logs/index.js`,
+  `functions/api/love-logs/[id].js` — `notifyPartner` 호출에 `type`/`relatedDate`/`relatedRecordId` 추가
+- `functions/api/notifications/index.js`(신규) — `GET /api/notifications`
+- `functions/api/notifications/read.js`(신규) — `POST /api/notifications/read`
+- `functions/api/me.js` — `unreadNotifications` 카운트 추가
+- `migrations/0003_notifications.sql`(신규) — `notifications` 테이블 + 인덱스
+- `package.json` — `d1:migrate:*:notifications` 스크립트 추가
+
+### Prediction Carousel Shadow/잘림 원인과 해결
+- 원인 ①: 직전 Sprint에서 Hero/Calendar(`--shadow-1`)와 다르게 의도적으로 도입한 `--shadow-2`가 시각적
+  불일치를 만듦 → `--shadow-2` 제거하고 `.prediction-slide`를 `--shadow-1`로 통일(토큰 자체도 미사용이 되어
+  삭제)
+- 원인 ②: `.prediction-track`이 `overflow-x: auto`만 지정 — CSS Overflow 스펙상 한쪽 축만 `visible`이
+  아니면 다른 축도 자동으로 `auto`로 강제되어(`overflow-y: auto`), 카드의 위아래 Shadow가 스크롤
+  컨테이너 경계에서 잘림
+- 해결: `.prediction-track`에 `padding: var(--space-md) 0`(12px)으로 Shadow가 그려질 여백을 스크롤
+  컨테이너의 padding-box 안쪽에 확보하고, `margin: calc(var(--space-md) * -1) 0`으로 동일하게 상쇄해
+  카드 간격·전체 레이아웃 높이는 기존과 동일하게 유지
+- 라운드/배경(카드별 배경색 없음)은 기존과 동일해 별도 변경 없음, 가로 스크롤/다음 카드 peek/스크롤바
+  숨김 모두 유지
+
+### 알림 저장 구조
+- `functions/_lib/push.js`의 `notifyUser()`가 웹푸시 발송 여부와 무관하게 항상 먼저
+  `notifications` 테이블에 저장(`saveNotification`), 그 다음 `push_subscriptions`가 있을 때만 웹푸시
+  발송(payload에서 `title`/`body`/`url`만 추려 실제 푸시 페이로드로 전송, `type`/`relatedDate`/
+  `relatedRecordId`는 저장용으로만 사용)
+- `notifyPartner()`는 기존 시그니처 그대로 유지, 호출부(`cycles`/`love-logs` 4개 API)에서 payload에
+  `type`(`cycle_created`/`cycle_updated`/`cycle_deleted`/`love_log_created`/`love_log_deleted`),
+  `relatedDate`, `relatedRecordId`만 추가
+- 삭제 API(`cycles/[id].js` DELETE, `love-logs/[id].js` DELETE)는 삭제 전에 먼저 `SELECT`로
+  `start_date`/`date`를 조회해 `relatedDate`로 넘김(삭제 후에는 조회 불가하므로)
+
+### Supabase → D1 결정 경위
+초기 지시사항은 Supabase + RLS를 전제했으나, 실제 프로젝트 스택은 Cloudflare D1 + 커스텀 세션 쿠키
+인증(Supabase 전혀 사용하지 않음)임을 조사로 확인. 사용자 확인 후 D1 확장 방식으로 결정.
+
+### D1 Migration / 접근 제어
+`migrations/0003_notifications.sql`:
+```sql
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  related_date TEXT,
+  related_record_id TEXT,
+  is_read INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+```
+D1(SQLite)에는 Postgres RLS가 없어, 기존 프로젝트 관례(모든 API가 `_middleware.js`의 세션 인증 + 각
+endpoint의 `user_id`/`user.role` 체크로 접근 제어)를 그대로 따름:
+- `GET /api/notifications`: `WHERE user_id = ?`(세션의 본인 id)로만 조회 — 클라이언트가 다른 사용자
+  것을 조회할 방법 없음(쿼리 파라미터로 user_id를 받지 않음)
+- `POST /api/notifications/read`: `UPDATE ... WHERE user_id = ? AND is_read = 0`으로 본인 행의
+  `is_read`만 수정
+- 알림 생성(INSERT)은 클라이언트 API가 아니라 서버 내부 `saveNotification()`에서만 호출됨(HTTP로 직접
+  노출되지 않음) — 클라이언트가 임의로 알림을 생성할 수 없음
+
+### QA (Playwright, `wrangler pages dev` 로컬 + 로컬 D1)
+- Hero/Prediction/Calendar `getComputedStyle().boxShadow` 3곳 완전 동일(`--shadow-1`) 확인
+- `.prediction-track`/`.prediction-slide` 좌표 비교: 390px·320px 뷰포트 모두 카드 위아래 12px씩 여유
+  확보되어 Shadow 잘림 없음 확인, 가로 스크롤/다음 카드 peek 유지 확인
+- Owner 계정: cycle 생성 시 상대방 `notifications`에 `type`/`related_date`/`related_record_id`까지
+  정확히 저장됨을 D1 쿼리로 직접 확인
+- Owner/Viewer 각각 자신에게 온 알림만 `GET /api/notifications`에 노출됨을 별도 세션 2개로 교차 확인
+  (상대방 알림 미노출)
+- 최신순(`created_at DESC`) 정렬 확인
+- 알림함 진입 시 그 시점의 안 읽음 상태를 먼저 렌더링(Dot + 강조 Surface) → 이후 서버에 읽음 처리 요청 →
+  Bell dot 즉시 사라짐 → 재방문 시 전부 읽음 상태로 표시, 각 단계 스크린샷/DOM 상태로 확인
+- Bell `has-unread` Dot: 안 읽은 알림 있을 때만 표시, 없을 때(신규 사용자) 미표시 확인
+- 빈 상태("알림이 없어요") 정상 표시 확인
+- Owner/Viewer 두 세션 모두 Console/Page Error 0건
+- 로컬 D1에 삽입했던 테스트 계정/알림/기록은 QA 후 전부 정리(운영 원격 D1에는 영향 없음, `.wrangler/`는
+  gitignore 대상 로컬 상태)
+
+### 배포
+- 원격 D1(`period-tracker-db`)에 `migrations/0003_notifications.sql` 적용 완료(테이블 생성 확인)
+- Cloudflare Pages는 GitHub(`origin/main`) 연동 자동 배포 — 이번 커밋 push로 배포 트리거
+
+---
+
+# Current Task (직전 완료분: Home UI 폴리싱 Sprint)
+
+## Goal
 Home UI 폴리싱 Sprint(Prediction Shadow / Calendar 상태 표현 / 선택 날짜 UI). Owner/Viewer 동일 적용,
 기존 권한 차이만 유지. API/DB/계산 로직/상태 관리는 변경하지 않는다.
 

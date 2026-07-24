@@ -40,9 +40,12 @@ export async function onRequestPost(context) {
 
   context.waitUntil(
     notifyPartner(env, user.id, {
+      type: "love_log_created",
       title: "사랑기록 추가됨",
       body: `${user.name}님이 새 사랑기록을 남겼어요 (${date})`,
       url: "/",
+      relatedDate: date,
+      relatedRecordId: id,
     })
   );
 

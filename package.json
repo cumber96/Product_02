@@ -10,6 +10,8 @@
     "d1:migrate:remote": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0001_init.sql",
     "d1:migrate:local:love": "wrangler d1 execute period-tracker-db --local --file=./migrations/0002_love_logs.sql",
     "d1:migrate:remote:love": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0002_love_logs.sql",
+    "d1:migrate:local:notifications": "wrangler d1 execute period-tracker-db --local --file=./migrations/0003_notifications.sql",
+    "d1:migrate:remote:notifications": "wrangler d1 execute period-tracker-db --remote --file=./migrations/0003_notifications.sql",
     "deploy": "wrangler pages deploy ."
   },
   "devDependencies": {

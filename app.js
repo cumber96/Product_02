@@ -34,6 +34,8 @@ const state = {
   selectedDate: null,
   settingsOpen: false,
   notificationsOpen: false,
+  notifications: null,
+  notificationsStatus: "idle",
   sheetOpen: false,
 };
 
@@ -162,7 +164,7 @@ async function renderApp() {
     <div class="home-header">
       <div class="home-date">${formatLong(ymd(new Date()))}</div>
       <div class="home-header-actions">
-        <button class="icon-btn" data-action="open-notifications" aria-label="알림">${Bell()}</button>
+        <button class="icon-btn${state.me.unreadNotifications > 0 ? " has-unread" : ""}" data-action="open-notifications" aria-label="알림">${Bell()}</button>
         <button class="icon-btn" data-action="open-settings" aria-label="설정">${Settings()}</button>
       </div>
     </div>
@@ -199,22 +201,80 @@ function getTodayHeroStatus(flags) {
 }
 
 // ---------- Notification Center ----------
-// 알림을 저장하는 테이블/API가 아직 없어 항상 빈 상태만 보여준다 — 가짜 알림 데이터를 만들지 않음.
-// 향후 실제 알림(파트너의 기록 추가/수정, 사랑기록 추가/삭제, 파트너 연결/초대, 생리 예정일 안내, 시스템
-// 안내 등)을 저장하는 백엔드가 생기면: (1) 이 화면을 열 때 { id, type, source, body, createdAt, read,
-// targetDate? } 형태의 목록을 불러와 List+Divider로 렌더링하고, (2) 알림 탭 시 targetDate가 있으면 기존
-// "open-date" 액션을 재사용해 해당 날짜로 연결한다(새 상세 화면을 만들지 않는다).
 function renderNotificationCenter() {
   appEl.innerHTML = `
     <div class="detail-header">
       <button class="icon-btn header" data-action="close-notifications" aria-label="뒤로">${ArrowLeft()}</button>
       <div class="detail-date">알림함</div>
     </div>
-    <div class="empty-state">
-      <div class="empty-state-title">알림이 없어요</div>
-      <p class="hint">새로운 기록이나 일정이 생기면 알려드릴게요.</p>
+    ${renderNotificationBody()}
+  `;
+}
+
+function renderNotificationBody() {
+  const status = state.notificationsStatus;
+
+  if (status === "loading" || status === "idle") {
+    return `<div class="loading">불러오는 중…</div>`;
+  }
+
+  if (status === "error") {
+    return `
+      <div class="empty-state">
+        <div class="empty-state-title">알림을 불러오지 못했어요</div>
+        <p class="hint">잠시 후 다시 시도해주세요.</p>
+        <button class="btn" data-action="retry-notifications">다시 시도</button>
+      </div>
+    `;
+  }
+
+  const notifications = state.notifications || [];
+  if (notifications.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-state-title">알림이 없어요</div>
+        <p class="hint">새로운 기록이나 일정이 생기면 알려드릴게요.</p>
+      </div>
+    `;
+  }
+
+  return `<div class="list">${notifications.map(renderNotificationItem).join("")}</div>`;
+}
+
+function renderNotificationItem(n) {
+  const dot = n.is_read ? "" : `<span class="notification-dot" aria-hidden="true"></span>`;
+  return `
+    <div class="list-row list-row-stack${n.is_read ? "" : " unread"}">
+      <div class="list-row-title">${dot}${escapeHtml(n.title)}</div>
+      <p class="hint">${escapeHtml(n.body)}</p>
+      <p class="hint">${formatNotificationTime(n.created_at)}</p>
     </div>
   `;
+}
+
+// 알림함에 들어온 시점의 안 읽음 상태를 먼저 화면에 그대로 보여준 뒤, 그 다음에 서버에 읽음 처리를
+// 요청한다 — 그래야 "이번에 새로 온 알림"이 Dot으로 구분되어 보인 후 다음 방문부터 사라짐
+async function loadNotifications() {
+  state.notificationsStatus = "loading";
+  await renderApp();
+  try {
+    const { notifications } = await api("/api/notifications");
+    state.notifications = notifications;
+    state.notificationsStatus = "ready";
+    await renderApp();
+    if (state.me.unreadNotifications > 0) {
+      state.me.unreadNotifications = 0;
+      api("/api/notifications/read", { method: "POST" }).catch(() => {});
+    }
+  } catch {
+    state.notificationsStatus = "error";
+    await renderApp();
+  }
+}
+
+async function handleOpenNotifications() {
+  state.notificationsOpen = true;
+  await loadNotifications();
 }
 
 // ---------- Settings screen ----------
@@ -693,10 +753,8 @@ async function onAppClick(e) {
     return renderApp();
   }
   if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
-  if (action === "open-notifications") {
-    state.notificationsOpen = true;
-    return renderApp();
-  }
+  if (action === "open-notifications") return handleOpenNotifications();
+  if (action === "retry-notifications") return loadNotifications();
   if (action === "close-notifications") {
     state.notificationsOpen = false;
     return renderApp();
@@ -815,6 +873,9 @@ async function handleLogout() {
   state.prediction = null;
   state.logs = [];
   state.inviteResult = null;
+  state.notificationsOpen = false;
+  state.notifications = null;
+  state.notificationsStatus = "idle";
   renderLogin(null);
 }
 
@@ -956,6 +1017,13 @@ function formatLong(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(y, m - 1, d);
   return `${Number(m)}월 ${Number(d)}일 ${WEEKDAYS[date.getDay()]}요일`;
+}
+
+function formatNotificationTime(unixSeconds) {
+  const date = new Date(unixSeconds * 1000);
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hh}:${mm}`;
 }
 
 function escapeHtml(str) {

@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+### Added (Prediction Shadow 재통일 + 알림함 실데이터 연동)
+
+- 알림함(Notification Center)이 실제 데이터를 조회하도록 구현. D1에 `notifications` 테이블을 신규
+  추가하고, 기존 푸시 발송 흐름(`notifyPartner`/`notifyUser`)에서 발송과 같은 흐름으로 알림 레코드를
+  영구 저장(푸시 구독 여부와 무관하게 항상 저장 — 앱이 꺼져 있어도 기록이 남고, 지난 알림도 조회 가능)
+- `GET /api/notifications`(본인 알림만 최신순), `POST /api/notifications/read`(본인 알림 일괄 읽음
+  처리) 엔드포인트 추가. 알림 생성은 서버 내부 로직에서만 일어나 클라이언트가 임의로 알림을 만들 수 없음
+- 알림함에 로딩/에러/빈 상태 추가, 안 읽은 알림은 Dot + 강한 Surface로 구분, 진입 시 읽음 처리
+- Bell 아이콘에 안 읽은 알림이 있을 때 작은 Dot 표시(`/api/me` 응답의 `unreadNotifications` 기반)
+
+### Changed (Prediction Shadow 재통일)
+
+- Prediction Carousel의 Shadow를 Hero/Calendar와 다시 동일한 `--shadow-1`로 통일(직전 Sprint에서
+  의도적으로 도입했던 `--shadow-2`는 실사용 QA 피드백으로 되돌리고 토큰 자체를 제거)
+- `.prediction-track`이 `overflow-x: auto`만 지정해 CSS 스펙상 `overflow-y`도 자동으로 `auto`가
+  되면서 카드 위아래 Shadow가 잘리던 문제 수정 — 상하 padding 추가 + 동일한 음수 margin으로 상쇄해
+  카드 간격/전체 높이는 유지
+
 ### Changed (Home UI 폴리싱 Sprint — Prediction Shadow / Calendar 상태 표현 / 선택 날짜)
 
 - Prediction Carousel 카드의 Border를 제거하고 Hero/Calendar보다 한 단계 약한 Shadow(신규
