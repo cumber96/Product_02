@@ -1,6 +1,136 @@
 # Current Task
 
 ## Goal
+Home UI 폴리싱 Sprint(Prediction Shadow / Calendar 상태 표현 / 선택 날짜 UI). Owner/Viewer 동일 적용,
+기존 권한 차이만 유지. API/DB/계산 로직/상태 관리는 변경하지 않는다.
+
+## Background
+직전 Sprint에서 Hero/Calendar를 Card+Shadow 언어로 통일했는데 Prediction Carousel만 Border만 있고
+Shadow가 없어 아직 살짝 어긋남. Calendar는 날짜 셀 전체를 색으로 채우는 방식이라 기간이 여러 날 겹치면
+셀이 무거워 보이고, 선택 시 숫자가 커지며 위치가 흔들리는 Ring 효과가 실사용 중 불편하다는 피드백.
+첨부 레퍼런스(주 단위 가로 Bar로 기간을 표현하고 날짜 숫자는 고정)를 참고해 재설계 요청.
+
+## Scope
+- **Prediction Carousel**: 기존 Border 제거, Hero/Calendar(`--shadow-1`)보다 한 단계 약한 Shadow 적용.
+  카드 높이/정보 구조/가로 스크롤/peek 유지
+- **Calendar 상태 표현**: 날짜 숫자+기록 표시 분리. 날짜 숫자는 셀 안 고정 위치, 생리/예상생리/가임기/
+  배란은 숫자 아래 고정된 가로 Bar 2단(1단: 생리·예상생리, 2단: 가임기·배란)으로 표현. 배란일은 가임기
+  Bar 안에서 색만 진해지는 방식으로 별도 Bar 없이 표현. 사랑기록=Heart 아이콘, 캘린더기록=Dot 유지.
+  오늘=숫자에 중립색 Filled Background(기존 "숫자 아래 작은 점" 대체)
+- **선택 날짜 UI**: 숫자 확대+Ring 효과 완전 제거. 선택 시 셀 전체에 아주 연한 Accent Tint만 추가, 숫자
+  레이아웃(위치/크기)은 어떤 상태에서도 불변. 오늘이면서 선택된 경우 Tint(셀 레벨)와 오늘 Filled
+  Background(숫자 레벨)가 서로 다른 레이어라 자연스럽게 동시 표시됨
+- **Calendar 레이아웃 원칙**: 날짜 숫자 위치/셀 높이 항상 고정, 같은 주 안의 여러 기간 Bar가 겹치지
+  않음(고정 2단 레인), 주 경계에서 Bar 자연 분리(기존 `isRangeConnected` 로직 재사용). Calendar 계산
+  로직(`classifyDate`/`buildCalendarCells`)과 Selected Date Detail 기능은 무변경
+- **절대 변경 금지 재확인**: API, DB, 계산 로직, 상태 관리, 권한 로직 — `functions/`, `migrations/`
+  diff 0 유지
+
+## Definition of Done
+- Prediction Card가 Hero/Calendar와 같은 Surface+Shadow 언어, Shadow는 한 단계 약함, 정보 구조/스크롤
+  유지
+- Calendar에서 생리/예상생리/가임기/배란 Bar가 서로 다른 위치·색으로 구분되고 같은 주 안에서 겹치지 않음
+- 날짜 선택 시 숫자 위치·크기 불변, 원형 Ring 없음, 오늘/선택 동시 표시 자연스러움
+- 사랑기록·캘린더기록 마커가 Bar/숫자와 겹치지 않음
+- Owner/Viewer 모두 Console Error 없이 정상 동작(QA)
+- `functions/`, `migrations/` diff 0
+- 배포(Cloudflare Pages) 완료, TASK.md/CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, QA 통과, 배포 완료. CHANGELOG.md 갱신 포함.
+
+### 변경 파일
+`app.js`, `style.css`만 수정. `functions/`, `migrations/`, `wrangler.toml`, `manifest.json`, `icons.js`
+diff 0 확인 — 새 아이콘 추가 없음, `classifyDate()`/`buildCalendarCells()`/`isRangeConnected()` 등 계산
+로직 함수는 시그니처와 내부 로직 모두 한 글자도 변경하지 않음(grep으로 재확인).
+
+### Prediction Carousel Shadow
+- `.prediction-slide`의 `border: 1px solid var(--color-border-default)` 제거, `box-shadow:
+  var(--shadow-2)` 추가
+- `--shadow-2`(신규): `0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.04)` — 기존 `--shadow-1`
+  (Hero/Calendar가 사용, alpha 최대 0.1·blur 8px)보다 명확히 약하게(alpha 최대 0.04·blur 4px) 설계.
+  Playwright로 세 요소의 `getComputedStyle().boxShadow`를 비교해 Hero/Calendar는 `--shadow-1`,
+  Prediction은 `--shadow-2`로 실제 다르게 적용됨을 확인
+- 카드 높이·내부 정렬·정보 구조(아이콘+라벨 → D-Day+날짜)·가로 스크롤·peek·인디케이터 없음은 전부 무변경
+
+### Calendar 상태 표현 (가장 큰 변경)
+- **구조 전환**: 셀 전체를 배경으로 채우던 방식 → 날짜 숫자(`.num`)를 셀 안 절대 위치(`top:6px`,
+  가로 중앙, 항상 22×22 고정 박스)로 고정하고, 그 아래 두 개의 고정 레인에 가로 Bar(`<span
+  class="cell-bar">`)를 얹는 구조로 전면 재작성. `renderDayCell()`이 클래스 목록만 만들던 것에서
+  `renderDayBars()`(신규)가 실제 Bar 마크업을 생성하는 구조로 분리
+- **1단 레인**(생리·예상생리): `cell.period`면 `--color-period` 실선 Bar, 아니고 `cell.predicted`면
+  옅은 톤(`color-mix` 35%) + 점선 상하단 테두리 Bar. `classifyDate()`가 이미 `predicted: !inPeriod &&
+  inPredicted`로 두 상태를 배타적으로 만들어놓아 같은 레인을 안전하게 공유
+- **2단 레인**(가임기·배란): `cell.fertile`이면 `--color-fertile` Bar, 그 중 `cell.ovulation`인 날은
+  같은 레인·같은 모양에서 색만 `--color-ovulation`으로 교체 — "가임기 Bar 내부의 진한 Segment"를 별도
+  요소 없이 색상 교체만으로 구현(같은 주에서 가임기 Bar가 배란일 Bar와 자연스럽게 이어져 보임)
+  - 두 레인은 서로 다른 `bottom` 값(15px / 6px)에 고정돼 있어 어떤 조합이 겹쳐도(이론상 period+fertile
+    같은 날) 레이어가 겹치지 않음
+- **연결 처리**: 기존 `isRangeConnected()`를 그대로 재사용(period/fertile 두 키만 쓰던 것을 predicted
+  키까지 포함하도록 확장 호출), 각 Bar에 `connect-prev`/`connect-next` 클래스로 맞닿는 쪽 모서리만 각지게
+  — 주 경계(같은 행이 아님)에서는 자동으로 분리됨. 실제로 이번 달 생리기간(4~8일)이 토요일(4일)/
+  일요일(5일) 경계를 가로질러 두 세그먼트로 자연스럽게 나뉘는 것을 스크린샷으로 확인
+- **오늘**: 숫자 아래 작은 점(`::before`) → `.day-cell.today .num { background:
+  var(--color-surface-strong) }`로 변경(숫자 자체에 중립색 채우기). 부수 효과로, 오늘 날짜가 두 자리
+  수일 때 점이 숫자와 겹쳐 보이던 **직전 Sprint까지 계속 보고되던 기존 버그가 이번 구조 변경으로 자연
+  해소됨**(더 이상 별도 점 요소가 없음)
+- **예상 라벨 미구현**: "가능하면 예상 라벨 표시" 요청에 따라 예상 생리기간 Bar 시작 칸에 "예상" 텍스트를
+  실제로 넣어봤으나, 셀 폭(~46px)이 좁아 고정 위치의 날짜 숫자와 겹쳐 스크린샷상 완전히 뭉개짐을 확인
+  → 제거하고 옅은 색+점선 테두리(Bar 스타일)와 Legend의 "예상 생리기간" 텍스트로만 구분하도록 결정.
+  app.js/style.css에 이유를 주석으로 남김
+- **Legend 동기화**: `.swatch-period`/`.swatch-predicted`를 기존 12×12 사각형/점선 박스에서 새 Bar와
+  같은 모양(12×5 Rounded Bar, predicted는 점선 상하단 테두리)으로 갱신 — `.swatch-fertile`/
+  `.swatch-ovulation`은 이전부터 이미 Bar 모양이라 무변경. 2줄 구성은 유지
+
+### 선택 날짜 처리
+- 기존 `.day-cell.selected .num { box-shadow: inset...; width/height:22px; border-radius:full }`
+  (Ring, 숫자 크기 변경) 완전 삭제
+- `.num`을 항상 22×22 고정 박스로 통일(선택 여부와 무관하게 모든 상태에서 동일 크기) — 이게 바로
+  "숫자가 위로 이동"하던 원인이었음(선택 시에만 명시적 width/height를 주던 것이 flex stretch 기본값과
+  충돌해 위치가 흔들림). 모든 상태를 동일한 고정 박스로 통일해 근본적으로 해결
+- 선택 표시는 `.day-cell.selected { background: color-mix(accent 8%, transparent) }`(셀 전체 옅은
+  Tint)로 교체 — Ring 미사용
+- 오늘+선택 동시 표시: 오늘 표시(숫자 레벨 배경)와 선택 표시(셀 레벨 배경)가 서로 다른 레이어라 특별한
+  분기 처리 없이도 항상 자연스럽게 함께 보임 — 스크린샷으로 확인(회색 숫자 원 + 옅은 핑크 셀 배경 동시
+  노출)
+- Selected Date Detail(`renderSelectedDateDetail`)·Bottom Sheet 갱신 기능은 전혀 손대지 않음(같은
+  `data-action="open-date"`/`state.selectedDate` 토글 로직 재사용)
+
+### Calendar 레이아웃 원칙 준수 확인
+- 날짜 숫자 위치: 절대 좌표(`top:6px`, 가로 중앙)로 고정, 모든 상태에서 동일 — Playwright로 오늘/선택/
+  일반 셀의 `.num` bounding box 좌표가 동일함을 확인
+- 셀 높이/정렬: `.day-cell`이 `aspect-ratio:1/1`만 유지하고 내부는 전부 절대 배치라 상태에 따라 셀 자체
+  크기가 변하지 않음
+- 같은 주 안 여러 Bar 비중첩: 고정 2단 레인 구조로 구조적으로 보장(우연이 아니라 설계상 불가능)
+- 주 경계 자연 분리: `isRangeConnected`의 "같은 행(週)인지" 체크를 그대로 재사용해 확인(생리기간·예상
+  생리기간 둘 다 주 경계에서 분리되는 것을 스크린샷으로 확인)
+- 계산 로직/Selected Date Detail: `classifyDate`/`buildCalendarCells`/`renderSelectedDateDetail` 등
+  diff 없음(grep 확인)
+
+### QA 방법 및 결과
+- Google 로그인 없이 `boot()`만 mock 데이터로 임시 교체한 스크래치패드 복사본을 Playwright(Chromium
+  headless, `hasTouch:true`)로 렌더링/조작 확인(실제 배포 코드는 미변경, mock 복사본은 검증 후 폐기)
+- Calendar Grid 스크린샷(기본/오늘 선택/생리기간 날짜 선택 3종)으로 Bar 분리·비중첩·오늘+선택 동시 표시
+  육안 확인, 사랑기록+캘린더기록 마커가 있는 셀을 확대해 서로 겹치지 않음 확인
+- Owner/Viewer 각각 날짜 선택→해제 토글, 월 이동(다음 달) 정상 동작 확인 — 전 케이스 Console Error/
+  pageerror 0건
+- `getComputedStyle().boxShadow`로 Hero/Calendar(`--shadow-1`)와 Prediction(`--shadow-2`)이 실제로 다른
+  값임을 프로그래매틱으로 확인
+- `node --check app.js` 문법 통과, CSS 중괄호 짝 확인
+- `git diff --stat`으로 `functions/`, `migrations/` 등 diff 0 재확인
+- **실기기 실사용 테스트는 미실시** — 아래 Known Issue 참고
+
+### 배포
+✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
+원격 D1 작업 불필요.
+
+---
+
+# Current Task (직전 완료분: Home 시각 일관성 개선 + 알림함 + 더블탭 버그 수정)
+
+## Goal
 Home 시각 일관성 개선 + 알림함 구현 + 더블탭 확대 버그 수정 Sprint. Owner/Viewer 동일 적용, 기존 권한
 차이만 유지. 기존 API/데이터 모델/예측·캘린더 계산 로직은 변경하지 않는다.
 

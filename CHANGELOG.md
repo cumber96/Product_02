@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+### Changed (Home UI 폴리싱 Sprint — Prediction Shadow / Calendar 상태 표현 / 선택 날짜)
+
+- Prediction Carousel 카드의 Border를 제거하고 Hero/Calendar보다 한 단계 약한 Shadow(신규
+  `--shadow-2`)를 적용해 Surface+Shadow 시각 언어를 통일
+- Calendar 날짜 셀 구조를 전면 재설계: 날짜 숫자를 셀 안 고정 위치에 두고, 생리·예상생리·가임기·배란을
+  숫자 아래 고정된 가로 Bar 2단(1단 생리/예상생리, 2단 가임기/배란)으로 표현. 배란일은 가임기 Bar 안에서
+  색만 진해지는 방식으로 표시. 같은 주 안에서 여러 기간이 있어도 서로 다른 레인이라 겹치지 않고, 주가
+  바뀌는 지점에서는 Bar가 자연스럽게 분리됨. 오늘 표시를 "숫자 아래 점"에서 "숫자에 중립색 채우기"로
+  변경(부수 효과로 두 자리 날짜에서 점이 숫자와 겹치던 기존 버그도 함께 해소됨)
+- 날짜 선택 시 숫자가 커지며 원형 Ring이 생기던 효과를 완전히 제거. 선택 시 셀 전체에 아주 연한 Accent
+  Tint만 추가되며, 날짜 숫자 위치·크기는 어떤 상태에서도 변하지 않음. 오늘이면서 선택된 날짜는 두
+  표시(숫자 배경/셀 배경)가 서로 다른 레이어라 자연스럽게 함께 보임
+- Calendar Legend의 생리/예상생리 심볼을 새 Bar 모양(Rounded Bar)으로 갱신해 실제 캘린더 마커와 일치시킴
+- 계산 로직(`classifyDate`, `buildCalendarCells`)과 Selected Date Detail 기능은 변경 없음
+
 ### Added (Home 시각 일관성 개선 + 알림함 + 더블탭 버그 수정 Sprint)
 
 - 알림함(Notification Center) 화면 추가 — Home의 Bell 아이콘을 누르면 Toast 대신 실제 전체 화면(← 알림함

@@ -423,24 +423,43 @@ function isRangeConnected(cells, index, key, dir) {
 function renderDayCell(cell, index, cells) {
   if (!cell) return `<div class="day-cell empty"></div>`;
   const classes = ["day-cell"];
-  if (cell.period) classes.push("period");
-  if (cell.predicted) classes.push("predicted");
-  if (cell.fertile) classes.push("fertile");
-  if (cell.ovulation) classes.push("ovulation");
   if (cell.today) classes.push("today");
   if (cell.selected) classes.push("selected");
 
-  ["period", "fertile"].forEach((key) => {
-    if (!cell[key]) return;
-    if (isRangeConnected(cells, index, key, -1)) classes.push(`${key}-connect-prev`);
-    if (isRangeConnected(cells, index, key, 1)) classes.push(`${key}-connect-next`);
-  });
-
   const markers =
-    (cell.love ? `<span class="cell-marker love">${Heart({ size: 11 })}</span>` : "") +
-    (cell.hasNote ? `<span class="cell-marker record"></span>` : "");
+    (cell.hasNote ? `<span class="cell-marker record"></span>` : "") +
+    (cell.love ? `<span class="cell-marker love">${Heart({ size: 11 })}</span>` : "");
 
-  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}" role="gridcell" aria-selected="${cell.selected}" aria-label="${cell.day}일"><span class="num">${cell.day}</span>${markers}</div>`;
+  return `<div class="${classes.join(" ")}" data-action="open-date" data-date="${cell.date}" role="gridcell" aria-selected="${cell.selected}" aria-label="${cell.day}일"><span class="num">${cell.day}</span>${markers}${renderDayBars(cell, index, cells)}</div>`;
+}
+
+// 날짜 숫자/마커와 겹치지 않는 고정 위치의 가로 Bar 2단(생리·예상생리 / 가임기·배란)으로 기간을 표현.
+// 같은 종류가 이웃 셀에도 있으면(연결 여부는 isRangeConnected가 판정) 맞닿는 쪽 모서리만 각지게 만들어
+// 하나로 이어진 Bar처럼 보이게 함 — 기존 셀 배경 방식과 동일한 연결 기법을 Bar에 적용한 것뿐
+function barConnectClasses(cells, index, key) {
+  let cls = "";
+  if (isRangeConnected(cells, index, key, -1)) cls += " connect-prev";
+  if (isRangeConnected(cells, index, key, 1)) cls += " connect-next";
+  return cls;
+}
+
+function renderDayBars(cell, index, cells) {
+  let bars = "";
+
+  if (cell.period) {
+    bars += `<span class="cell-bar cell-bar-period${barConnectClasses(cells, index, "period")}"></span>`;
+  } else if (cell.predicted) {
+    // "예상" 텍스트 라벨은 셀 안 고정 위치의 날짜 숫자와 겹쳐 넣을 공간이 없어 시도 후 제외(아래 CSS 주석 참고).
+    // 옅은 색+점선 테두리(Bar 스타일)와 Legend의 "예상 생리기간" 텍스트로 구분
+    bars += `<span class="cell-bar cell-bar-predicted${barConnectClasses(cells, index, "predicted")}"></span>`;
+  }
+
+  if (cell.fertile) {
+    const tone = cell.ovulation ? "ovulation" : "fertile";
+    bars += `<span class="cell-bar cell-bar-${tone}${barConnectClasses(cells, index, "fertile")}"></span>`;
+  }
+
+  return bars;
 }
 
 // 생리/예상/가임기/배란/사랑기록/메모 여부를 하루 단위로 판정 — 캘린더 그리드와 Selected Date Detail이 동일 로직을 공유
