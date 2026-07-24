@@ -130,8 +130,8 @@ Calendar는 Card+Shadow 구조라 화면 안에서 시각 언어가 어긋난다
   금지 범위라 이번에도 손대지 않음
 
 ### 배포
-✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
-원격 D1 작업 불필요.
+✅ 커밋 `64eb4a3`, `origin/main`으로 push 완료. Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB
+마이그레이션 없어 원격 D1 작업 불필요.
 
 ---
 
