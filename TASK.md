@@ -1,6 +1,131 @@
 # Current Task
 
 ## Goal
+UI Refine Sprint. 기능 변경이 아니라 Home / Calendar / Settings의 UI 구조 개선. Owner/Viewer 동일하게
+적용하며 권한에 따른 기능 차이만 유지. 기존 기능/API/상태관리/DB는 변경하지 않는다.
+
+## Background
+직전 Sprint에서 만든 Prediction Horizontal Card Carousel과 Calendar 마커 디자인, Settings의 Card 기반
+구조를 실사용 후 다시 다듬는 요청. Prediction 카드는 D-Day와 실제 날짜가 세로로 분리돼 있어 한눈에 안
+들어옴, Calendar는 Border/Grid가 무겁고 월 이동 버튼이 큰 원형이라 여백이 부족, Settings는 Card 구조가
+iOS Settings 대비 무겁다는 피드백.
+
+## Scope
+- **Home Header**: 오늘 날짜 + 설정 아이콘만 유지 (이미 해당 구조, 변경 없음 확인만)
+- **Prediction**: 가로 스크롤 카드 구조·Pagination 없음 유지, 카드 안에서 정보명(label)이 최상단에
+  먼저 보이도록 유지, D-Day(상대 날짜)와 실제 날짜를 같은 줄에 배치하도록 변경(현재는 세로로 분리됨)
+- **Calendar**: 여백 중심·Border 최소화·Grid 약하게·월 이동 버튼 축소·큰 원형 버튼 제거·"‹ 2026.07 ›"
+  구조로 헤더/그리드 시각 언어 재작업. 날짜 상태(오늘/선택/생리/예상생리/가임기/배란/사랑기록/캘린더기록)
+  표현 방식과 계산 로직은 변경하지 않음. 참고 이미지가 이번 대화에 첨부되지 않아 텍스트 원칙만으로 구현
+- **Legend**: 2줄 구성(1줄: 생리/예상생리/가임기, 2줄: 배란/사랑기록/캘린더기록)으로 재배치, 마커는
+  Calendar와 동일한 것 재사용
+- **Settings**: Card 구조 제거, iOS Settings류 List 기반 UI로 전환. 구조는 Header→Profile→Partner→
+  Notification→Logout 유지, 각 섹션 기능(프로필 표시/초대 생성/파트너 상태/알림 켜기끄기/로그아웃)은
+  전부 그대로 유지
+- **Scrollbar**: Home/Prediction/Calendar/Settings/Bottom Sheet 전 영역에서 스크롤바 숨김(스크롤 동작은
+  유지, `overflow:hidden` 금지 — `scrollbar-width:none` + `::-webkit-scrollbar{display:none}` 사용)
+- **절대 변경 금지**: API, 계산 로직, 권한 로직, Bottom Sheet 리디자인, Typography, Color System —
+  `functions/`, `migrations/` diff 0 유지
+
+## Definition of Done
+- Prediction 카드: label 최상단, D-Day와 실제 날짜 한 줄, 가로 스크롤/peek 유지, pagination 없음
+- Calendar: 셀 border 최소화(여백 중심), 월 이동 버튼이 더 이상 큰 원형 배경이 아님, 헤더가 "‹ 2026.07 ›"
+  형태, 8개 상태 표현 방식 유지
+- Legend가 2줄(3+3) 구성
+- Settings가 Card 없이 List 기반(iOS 스타일)으로 재구성, Owner/Viewer 기능 차이 그대로 유지
+- 모든 스크롤 영역에서 스크롤바 비노출 + 스크롤 정상 동작(`overflow:hidden` 미사용)
+- Owner/Viewer 둘 다 Console Error 없이 정상 동작(QA)
+- `functions/`, `migrations/` diff 0
+- 배포(Cloudflare Pages) 완료, TASK.md/CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, QA 통과, 배포 완료. CHANGELOG.md 갱신 포함.
+
+### 변경 파일
+`app.js`, `style.css`, `TASK.md`, `CHANGELOG.md`만 수정. `functions/`, `migrations/`, `wrangler.toml`,
+`manifest.json`, `icons.js` diff 0 확인.
+
+### Prediction
+- `.prediction-slide` 안 `<div class="relative">`/`<div class="date">` 세로 스택을 `.prediction-meta`
+  (flex, `justify-content:space-between`)로 감싸 한 줄로 배치. label(정보명)이 최상단에 오는 순서, 카드
+  폭 46%(peek 유지), pagination 없음(원래도 없었음), Semantic Color(`--color-period`/`-ovulation`/
+  `-fertile`)는 변경 없음
+
+### Calendar
+- 헤더: `.calendar-header`를 `justify-content:space-between` → `justify-content:center`(gap 작게)로
+  변경, 월 이동 버튼을 `.icon-btn.header`(32px 원형 배경)에서 새 `.icon-btn.month-nav`(배경 없음, 44×44
+  투명 히트 영역, 아이콘 16px로 축소)로 교체
+- `.day-cell`의 `border: 1px solid var(--color-border-soft)` 제거, `.calendar-grid`에 `gap: 4px 0` 추가로
+  border 없이 여백만으로 약한 grid 표현
+- `.calendar-card`(신규, `.card`에 추가로 붙는 클래스) — 테두리 제거 + 세로 패딩 확대(`--space-lg`)로
+  여백 중심 레이아웃. 전역 `.card`는 그대로 둬 다른 화면(Selected Date Detail 등) 영향 없음
+- 날짜 상태 8종(오늘/선택/생리/예상생리/가임기/배란/사랑기록/캘린더기록) 표현 방식, `classifyDate()`/
+  `buildCalendarCells()` 등 계산 로직 전부 무변경(diff 없음, grep으로 확인)
+
+### Legend
+- 마크업을 `.legend-row` 2개(1줄: 생리/예상생리/가임기, 2줄: 배란/사랑기록/캘린더기록)로 분리. `.legend`
+  는 `flex-wrap` 행 하나 → `flex-direction:column`으로 변경. 마커(`swatch-*`, Heart 아이콘)는 기존 그대로
+  재사용, 신규 마커 없음
+
+### Settings
+- Card 구조(`renderProfileCard`/`renderInviteCard`/`renderPartnerCard`/`renderNotificationSettingsCard`)를
+  List 구조(`renderProfileRow`/`renderInviteList`/`renderPartnerList`/`renderNotificationRow`)로 전면
+  교체. 신규 CSS `.list`/`.list-row`/`.list-row.list-row-stack`/`.list-row-content`/`.list-row-title`/
+  `.list-row.danger`
+- `.list-row` 배경을 `--color-surface`(흰색, canvas와 동일)가 아니라 `--color-surface-soft`(연회색, 기존
+  토큰 재사용)로 지정 — canvas와 surface가 같은 흰색이라 border 없이는 카드 그룹이 전혀 안 보이는 문제를
+  QA 중 발견해 수정. 새 색 토큰 추가 없이 기존 Semantic Token만 재배치
+- Header(뒤로가기+"설정")는 기존 `.detail-header`/`.icon-btn.header` 그대로 유지(변경 지시 없었음)
+- Owner: Profile → (미연결 시)Partner 초대 List → Notification → Logout. Viewer: Profile →
+  (미연결 시)Partner 상태 List → Notification → Logout. 파트너 연결 완료 시 Partner 섹션 자체가 렌더링
+  안 되는 기존 동작(빈 문자열 반환) 그대로 유지 — Owner/Viewer 기능 차이 100% 동일
+- 더 이상 쓰이지 않게 된 `renderSectionHeader()` 함수와 `User` 아이콘 import, `.section-header`/
+  `.profile-row` CSS 제거(grep으로 미사용 확인 후 삭제)
+
+### Scrollbar
+- `html, body`에 `scrollbar-width:none` + `::-webkit-scrollbar{display:none}` 추가(Home/Calendar/
+  Settings가 전부 같은 document 스크롤을 공유하므로 이 한 곳으로 커버)
+- `.sheet`(Bottom Sheet)에도 동일 규칙 추가. `.prediction-track`은 직전 Sprint에 이미 적용돼 있어 그대로
+  둠
+- `overflow:hidden`은 어디에도 사용하지 않음. Playwright로 `document.documentElement`/`body`의
+  `overflow`가 `visible`이고 `scrollHeight`(942px) > `innerHeight`(844px)임을 확인해 실제 스크롤이 살아
+  있음을 검증
+
+### QA 방법 및 결과
+- Google 로그인 없이 실제 화면을 확인하기 위해 `app.js`/`style.css`/`icons.js`/`index.html`/`sw.js`를
+  스크래치패드에 복사하고, `boot()`만 실제 API 호출 대신 mock 데이터를 주입하도록 임시로 바꾼 복사본을
+  만들어 `python3 -m http.server` + Playwright(Chromium headless)로 렌더링 확인(실제 배포 코드는 건드리지
+  않음, 이 mock 복사본은 검증 후 폐기)
+- Owner Home, Viewer Home, Owner/Viewer Settings(파트너 연결/미연결/초대링크 생성 후), Selected Date
+  Detail, Prediction 빈 상태(hasData:false), Bottom Sheet 오픈 등 8개 이상 상태를 스크린샷으로 확인
+- 월 이동(다음/이전 2회) → 라벨이 2026.08 / 2026.06으로 정확히 바뀜, 설정 화면 진입/뒤로가기 정상 확인
+- 모든 케이스에서 브라우저 Console Error/pageerror 0건
+- `node --check app.js` 문법 통과, CSS 중괄호 133/133 짝 확인
+- `git diff --stat`으로 `functions/`, `migrations/` 등 백엔드 diff 0 재확인
+
+### 발견했지만 고치지 않은 기존(pre-existing) 이슈
+- 오늘 날짜가 두 자리 수(예: 24일)일 때 "오늘" 표시용 점(`.day-cell.today::before`)이 숫자와 살짝
+  겹쳐 보임. 리팩터 전 원본 코드로도 동일하게 재현돼(스크린샷 비교로 확인) 이번 Sprint에서 만든 회귀가
+  아님. 계산 로직/마커 표현 방식은 이번 범위에서 변경 금지 항목이라 손대지 않고 그대로 둠 — 별도 후속
+  작업으로 처리 권장
+
+### 참고 이미지 관련
+- Calendar 관련 지시에 "첨부 레퍼런스와 같은 패턴으로 변경"이라는 문구가 있었으나 이번 대화에는 이미지가
+  첨부되지 않아, 텍스트로 명시된 원칙(여백 중심/Border 최소화/Grid 약하게/월 이동 버튼 축소/큰 원형 버튼
+  제거/"‹ 2026.07 ›" 구조)만으로 구현함. 실제 레퍼런스와 세부 차이가 있을 수 있어 확인 후 추가 조정 필요
+  시 알려주면 반영 가능
+
+### 배포
+✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
+원격 D1 작업 불필요.
+
+---
+
+# Current Task (직전 완료분: Prediction/Calendar 재조정)
+
+## Goal
 현재 배포된 Home의 Prediction 영역과 Calendar 영역만 시각 디자인/레이아웃을 재작업한다. 데이터, 계산
 로직, 상태 관리 방식, Selected Date Detail, Settings는 전부 그대로 유지 — DOM 구조와 CSS만 필요한
 범위에서 변경. 배포는 사용자가 별도 확인 후 요청. **CHANGELOG.md는 이번엔 수정하지 않음.**

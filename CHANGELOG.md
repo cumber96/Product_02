@@ -4,6 +4,25 @@
 
 ## [Unreleased]
 
+### Changed (UI Refine Sprint)
+
+- Prediction 카드: 상대 날짜("N일 뒤")와 실제 날짜("M.D (요일)")를 세로로 분리하던 것을 한 줄(좌우 배치)로
+  통합. 정보명(라벨)이 최상단에 오는 순서는 유지. 가로 스크롤/다음 카드가 일부 보이는 구조와 Semantic
+  Color는 변경 없음
+- Calendar: 헤더를 "‹ 2026.07 ›" 형태로 재구성(중앙 정렬, 월 이동 버튼을 큰 원형 배경에서 배경 없는
+  아이콘 버튼으로 축소 — 터치 영역 44px은 투명 여백으로 유지), 날짜 셀 테두리 제거, 셀 사이 여백(gap)으로
+  약한 Grid 표현, Calendar Card 자체 테두리도 제거해 여백 중심으로 변경. 날짜 상태(오늘/선택/생리/예상
+  생리/가임기/배란/사랑기록/캘린더기록) 표현 방식과 계산 로직은 변경 없음
+- Legend를 1줄(6개 나열)에서 2줄(1줄: 생리/예상생리/가임기, 2줄: 배란/사랑기록/캘린더기록)로 재배치.
+  마커는 기존과 동일한 것 재사용
+- Settings를 Card 구조에서 iOS Settings류 List 기반 UI로 전환(Profile/Partner/Notification/Logout,
+  각 섹션이 둥근 모서리의 회색(`--color-surface-soft`) List Row 그룹으로 표시, 무거운 Card 테두리 제거).
+  Header→Profile→Partner→Notification→Logout 구조와 각 섹션 기능(프로필 표시, 초대 링크 생성/복사,
+  파트너 연결 상태, 알림 켜기/끄기, 로그아웃)은 전부 그대로 유지. Owner/Viewer 기능 차이도 기존과 동일
+- 스크롤바를 전 화면(Home/Prediction/Calendar/Settings/Bottom Sheet)에서 숨김(`scrollbar-width:none` +
+  `::-webkit-scrollbar{display:none}`). 스크롤 동작 자체는 유지, `overflow:hidden`은 사용하지 않음
+- 더 이상 쓰이지 않게 된 `renderSectionHeader()` 헬퍼와 `.section-header`/`.profile-row` CSS 제거
+
 ### Added
 
 - 사랑기록 기능 추가: 날짜별로 사랑기록을 남기고 조회/삭제 가능 (Owner만 추가/삭제, Viewer는 조회만)

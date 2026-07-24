@@ -122,6 +122,15 @@
   flex-shrink: 0;
 }
 
+/* 스크롤은 유지하되 스크롤바만 숨김 (overflow:hidden 사용 금지) */
+html, body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   margin: 0;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
@@ -211,12 +220,6 @@ body {
 }
 
 /* --- Profile (Settings) --- */
-.profile-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
 .avatar {
   width: 32px;
   height: 32px;
@@ -244,6 +247,55 @@ body {
   background: var(--color-surface-strong);
   color: var(--color-text-primary);
 }
+
+/* --- List (Settings) --- */
+.list {
+  margin-bottom: var(--space-md);
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-md) var(--space-base);
+  background: var(--color-surface-soft);
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  cursor: default;
+  box-sizing: border-box;
+}
+
+button.list-row { cursor: pointer; }
+
+.list-row:first-child { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.list-row:last-child { border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.list-row:only-child { border-radius: var(--radius-md); }
+
+.list-row + .list-row { border-top: 1px solid var(--color-border-soft); }
+
+.list-row.list-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+}
+
+.list-row-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-row-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.list-row.danger { color: var(--color-danger); }
 
 .icon-btn {
   border: none;
@@ -273,14 +325,7 @@ body {
   margin-bottom: var(--space-md);
 }
 
-.section-header {
-  font-size: var(--font-size-subtitle);
-  font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--space-md);
-  color: var(--color-text-primary);
-}
-
-.card p.hint {
+p.hint {
   color: var(--color-text-secondary);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-relaxed);
@@ -332,6 +377,14 @@ body {
   color: var(--color-text-secondary);
 }
 
+.prediction-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: 2px;
+}
+
 .prediction-slide .relative {
   font-size: var(--font-size-subtitle);
   font-weight: var(--font-weight-bold);
@@ -341,6 +394,7 @@ body {
 .prediction-slide .date {
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .prediction-empty {
@@ -437,17 +491,28 @@ button {
 }
 
 /* --- Calendar --- */
+/* Border 최소화 + 여백 중심 — Card 자체 테두리를 빼고 세로 여백을 늘림 */
+.calendar-card {
+  border: none;
+  padding: var(--space-lg) var(--space-base);
+}
+
 .calendar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-md);
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
 }
 
-/* 월 이동 버튼은 여기서만 44px 터치 영역 확보(아이콘 자체 크기는 키우지 않음) */
-.calendar-header .icon-btn.header {
-  min-width: 44px;
-  min-height: 44px;
+/* 월 이동 버튼 — 큰 원형 배경 없이 아이콘만, 터치 영역은 44px을 투명 여백으로 확보 */
+.icon-btn.month-nav {
+  background: transparent;
+  color: var(--color-text-secondary);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--radius-sm);
 }
 
 .calendar-header .month-label {
@@ -460,6 +525,10 @@ button {
 .weekday-row, .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-grid {
+  gap: 4px 0;
 }
 
 .weekday-row div {
@@ -484,7 +553,6 @@ button {
   font-size: var(--font-size-caption);
   color: var(--color-text-primary);
   cursor: pointer;
-  border: 1px solid var(--color-border-soft);
 }
 
 .day-cell.empty { cursor: default; }
@@ -585,9 +653,14 @@ button {
 
 .legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm) var(--space-md);
+  flex-direction: column;
+  gap: var(--space-sm);
   margin-top: var(--space-md);
+}
+
+.legend-row {
+  display: flex;
+  gap: var(--space-md);
 }
 
 .legend-item {
@@ -720,6 +793,11 @@ button {
   overflow-y: auto;
   z-index: 201;
   animation: sheet-up 200ms ease-out;
+  scrollbar-width: none;
+}
+
+.sheet::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes sheet-up {

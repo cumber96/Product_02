@@ -12,7 +12,6 @@ import {
   Droplet,
   Circle,
   Egg,
-  User,
   X,
 } from "./icons.js";
 
@@ -38,11 +37,6 @@ const state = {
 };
 
 const appEl = document.getElementById("app");
-
-// ---------- Section Header ----------
-function renderSectionHeader(icon, title) {
-  return `<h2 class="section-header">${icon} ${title}</h2>`;
-}
 
 // ---------- API ----------
 async function api(path, options = {}) {
@@ -186,97 +180,99 @@ async function renderSettingsScreen() {
       <button class="icon-btn header" data-action="close-settings" aria-label="뒤로">${ArrowLeft()}</button>
       <div class="detail-date">설정</div>
     </div>
-    ${renderProfileCard(user, isOwner)}
-    ${isOwner ? renderInviteCard(partnerConnected) : renderPartnerCard(partner)}
-    ${renderNotificationSettingsCard(pushStatus)}
-    <div class="card">
-      <button class="btn ghost block" data-action="logout">${LogOut({ size: 20 })} 로그아웃</button>
+    <div class="list">${renderProfileRow(user, isOwner)}</div>
+    ${isOwner ? renderInviteList(partnerConnected) : renderPartnerList(partner)}
+    <div class="list">${renderNotificationRow(pushStatus)}</div>
+    <div class="list">
+      <button class="list-row danger" data-action="logout">
+        <span class="list-row-title">${LogOut({ size: 20 })} 로그아웃</span>
+      </button>
     </div>
   `;
 }
 
-function renderProfileCard(user, isOwner) {
+function renderProfileRow(user, isOwner) {
   return `
-    <div class="card">
-      ${renderSectionHeader(User(), "프로필")}
-      <div class="profile-row">
-        ${
-          user.picture
-            ? `<img class="avatar" src="${user.picture}" alt="">`
-            : `<div class="avatar" style="background:var(--color-accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--color-accent)">${escapeHtml(
-                (user.name || "?")[0]
-              )}</div>`
-        }
-        <div>
-          <div class="profile-name">${escapeHtml(user.name || user.email)}</div>
-          <span class="role-badge ${isOwner ? "" : "viewer"}">${isOwner ? "owner" : "viewer"}</span>
-        </div>
+    <div class="list-row">
+      ${
+        user.picture
+          ? `<img class="avatar" src="${user.picture}" alt="">`
+          : `<div class="avatar" style="background:var(--color-accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--color-accent)">${escapeHtml(
+              (user.name || "?")[0]
+            )}</div>`
+      }
+      <div class="list-row-content">
+        <div class="profile-name">${escapeHtml(user.name || user.email)}</div>
+        <span class="role-badge ${isOwner ? "" : "viewer"}">${isOwner ? "owner" : "viewer"}</span>
       </div>
     </div>
   `;
 }
 
-function renderNotificationSettingsCard(pushStatus) {
+function renderNotificationRow(pushStatus) {
+  const title = `<div class="list-row-title">${Bell()} 알림</div>`;
   if (pushStatus === "unsupported") {
     return `
-      <div class="card">
-        ${renderSectionHeader(Bell(), "알림 설정")}
+      <div class="list-row list-row-stack">
+        ${title}
         <p class="hint">이 브라우저에서는 알림을 지원하지 않아요.</p>
       </div>
     `;
   }
   if (pushStatus === "needs-install") {
     return `
-      <div class="card">
-        ${renderSectionHeader(Bell(), "알림 설정")}
+      <div class="list-row list-row-stack">
+        ${title}
         <p class="hint">아이폰에서 알림을 받으려면 먼저 사파리 하단 <b>공유 버튼</b> → <b>홈 화면에 추가</b>로 앱을 설치해주세요. 설치 후 홈 화면 아이콘으로 다시 열면 켤 수 있어요.</p>
       </div>
     `;
   }
   if (pushStatus === "subscribed") {
     return `
-      <div class="card">
-        ${renderSectionHeader(Bell(), "알림 설정")}
+      <div class="list-row list-row-stack">
+        ${title}
         <p class="hint">알림이 켜져 있어요. 상대방이 기록을 업데이트하면 알려드려요.</p>
-        <button class="btn ghost block" data-action="unsubscribe-push" style="margin-top:12px">알림 끄기</button>
+        <button class="btn ghost block" data-action="unsubscribe-push">알림 끄기</button>
       </div>
     `;
   }
   return `
-    <div class="card">
-      ${renderSectionHeader(Bell(), "알림 설정")}
+    <div class="list-row list-row-stack">
+      ${title}
       <p class="hint">상대방이 기록을 업데이트하면 바로 알려드려요.</p>
-      <button class="btn block" data-action="subscribe-push" style="margin-top:12px">알림 켜기</button>
+      <button class="btn block" data-action="subscribe-push">알림 켜기</button>
     </div>
   `;
 }
 
-function renderInviteCard(partnerConnected) {
+function renderInviteList(partnerConnected) {
   if (partnerConnected) return "";
   const result = state.inviteResult;
   return `
-    <div class="card">
-      ${renderSectionHeader(UserPlus(), "남자친구 초대하기")}
-      ${
-        result
-          ? `
-        <div class="invite-box">
-          <div class="invite-url">
-            <input id="invite-url-input" readonly value="${escapeHtml(result.url)}">
-            <button class="btn secondary" data-action="copy-invite">복사</button>
+    <div class="list">
+      <div class="list-row list-row-stack">
+        <div class="list-row-title">${UserPlus()} 남자친구 초대하기</div>
+        ${
+          result
+            ? `
+          <div class="invite-box">
+            <div class="invite-url">
+              <input id="invite-url-input" readonly value="${escapeHtml(result.url)}">
+              <button class="btn secondary" data-action="copy-invite">복사</button>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-secondary)">코드: ${escapeHtml(result.code)} · 7일간 유효</div>
           </div>
-          <div style="font-size:12px;color:var(--color-text-secondary)">코드: ${escapeHtml(result.code)} · 7일간 유효</div>
-        </div>
-      `
-          : `<button class="btn" data-action="create-invite">초대 링크 만들기</button>`
-      }
+        `
+            : `<button class="btn" data-action="create-invite">초대 링크 만들기</button>`
+        }
+      </div>
     </div>
   `;
 }
 
-function renderPartnerCard(partner) {
+function renderPartnerList(partner) {
   if (partner) return "";
-  return `<div class="card"><h2 class="section-header">아직 연결된 사용자가 없어요</h2></div>`;
+  return `<div class="list"><div class="list-row"><div class="list-row-title">아직 연결된 사용자가 없어요</div></div></div>`;
 }
 
 // ---------- Prediction Horizontal Card Carousel ----------
@@ -323,8 +319,10 @@ function renderPredictionCarousel() {
           <div class="prediction-slide tone-${c.tone}">
             <div class="prediction-icon">${c.icon}</div>
             <div class="label">${c.label}</div>
-            <div class="relative">${c.relative}</div>
-            <div class="date">${c.date}</div>
+            <div class="prediction-meta">
+              <span class="relative">${c.relative}</span>
+              <span class="date">${c.date}</span>
+            </div>
           </div>
         `
           )
@@ -342,21 +340,25 @@ function renderCalendarCard() {
   const monthLabel = `${year}.${String(month + 1).padStart(2, "0")}`;
 
   return `
-    <div class="card">
+    <div class="card calendar-card">
       <div class="calendar-header">
-        <button class="icon-btn header" data-action="prev-month" aria-label="이전 달">${ChevronLeft({ size: 18 })}</button>
+        <button class="icon-btn month-nav" data-action="prev-month" aria-label="이전 달">${ChevronLeft({ size: 16 })}</button>
         <div class="month-label">${monthLabel}</div>
-        <button class="icon-btn header" data-action="next-month" aria-label="다음 달">${ChevronRight({ size: 18 })}</button>
+        <button class="icon-btn month-nav" data-action="next-month" aria-label="다음 달">${ChevronRight({ size: 16 })}</button>
       </div>
       <div class="weekday-row">${WEEKDAYS.map((w) => `<div>${w}</div>`).join("")}</div>
       <div class="calendar-grid">${cells.map(renderDayCell).join("")}</div>
       <div class="legend">
-        <span class="legend-item"><span class="legend-swatch swatch-period"></span>생리기간</span>
-        <span class="legend-item"><span class="legend-swatch swatch-predicted"></span>예상 생리기간</span>
-        <span class="legend-item"><span class="legend-swatch swatch-fertile"></span>가임기</span>
-        <span class="legend-item"><span class="legend-swatch swatch-ovulation"></span>배란일</span>
-        <span class="legend-item">${Heart({ size: 14 })}사랑기록</span>
-        <span class="legend-item"><span class="legend-swatch swatch-record"></span>캘린더 기록</span>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-swatch swatch-period"></span>생리기간</span>
+          <span class="legend-item"><span class="legend-swatch swatch-predicted"></span>예상 생리기간</span>
+          <span class="legend-item"><span class="legend-swatch swatch-fertile"></span>가임기</span>
+        </div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-swatch swatch-ovulation"></span>배란일</span>
+          <span class="legend-item">${Heart({ size: 14 })}사랑기록</span>
+          <span class="legend-item"><span class="legend-swatch swatch-record"></span>캘린더 기록</span>
+        </div>
       </div>
     </div>
   `;
