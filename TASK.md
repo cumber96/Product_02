@@ -1,6 +1,143 @@
 # Current Task
 
 ## Goal
+Home 시각 일관성 개선 + 알림함 구현 + 더블탭 확대 버그 수정 Sprint. Owner/Viewer 동일 적용, 기존 권한
+차이만 유지. 기존 API/데이터 모델/예측·캘린더 계산 로직은 변경하지 않는다.
+
+## Background
+직전 Home UI 개선 Sprint에서 Today Hero를 텍스트 전용으로, Prediction 카드를 톤별 배경색으로 만들었는데,
+Calendar는 Card+Shadow 구조라 화면 안에서 시각 언어가 어긋난다는 피드백. 또한 Header에 추가했던 알림
+버튼이 아직 Toast만 띄우는 자리표시자 상태라 실제 알림함 화면이 필요하고, 실사용 중 버튼/캘린더 셀을
+빠르게 두 번 탭하면 브라우저가 확대되는 문제가 발견됨.
+
+## Scope
+- **Today Hero**: 텍스트 전용 → Calendar와 같은 `.card` 재사용(흰 배경 + 동일 Radius + `--shadow-1`),
+  화면 전체를 차지하지 않는 컴팩트한 요약 Card로. 문구/계산 로직(`getTodayHeroStatus`/`classifyDate`)은
+  무변경
+- **Prediction Carousel**: 카드별 핑크/보라 배경(`color-mix` 톤) 제거 → 흰 배경 + 얇은 Border로 통일,
+  종류 구분은 아이콘 색으로만. Calendar처럼 Shadow까지 넣으면 카드 3장이 나란히 있어 누적 무게가 더
+  강해지므로 Shadow는 넣지 않고 Border만. 정보 구조(아이콘/라벨/D-Day/날짜, peek, 가로 스크롤, 인디케이터
+  없음)는 무변경
+- **Notification Center**: Bell 버튼을 Toast 대신 실제 화면 이동으로 변경(Header ← 알림함 + List). 알림을
+  저장하는 테이블/API가 전혀 없어 가짜 데이터를 만들지 않고 항상 빈 상태 UI만 제공, 코드에 향후 연동
+  지점(데이터 shape/API 자리)을 주석으로 명확히 남김. Owner/Viewer 모두 동일하게 접근 가능
+- **더블탭 확대 버그**: 원인 조사 후 `touch-action: manipulation`을 인터랙티브 요소에 적용해 수정. 전역
+  핀치 줌은 유지(viewport `user-scalable=no`/`maximum-scale=1` 사용 금지). 빠른 연속 탭으로 인한 폼
+  중복 제출 여부도 함께 점검
+- **절대 변경 금지 재확인**: API, 데이터 모델, 예측/캘린더 계산 로직, 권한 로직, Bottom Sheet 리디자인
+  — `functions/`, `migrations/` diff 0 유지, 새 알림 테이블/엔드포인트 생성 금지
+
+## Definition of Done
+- Today Hero/Prediction/Calendar가 동일한 Card 언어(흰 배경/동일 Radius/약한 Shadow 또는 Border)로 보임
+- Prediction 카드에서 톤별 배경색 완전히 제거, 아이콘 색으로만 종류 구분
+- Bell → 알림함 화면 이동, 뒤로가기 정상, Owner/Viewer 둘 다 접근 가능, 가짜 알림 데이터 없음
+- 인터랙티브 요소 더블탭 시 확대되지 않음, 전역 핀치 줌은 정상 동작
+- 폼 빠른 연속 제출로 인한 중복 데이터 생성 방지
+- Owner/Viewer 모두 Console Error 없이 정상 동작(QA)
+- `functions/`, `migrations/` diff 0
+- 배포(Cloudflare Pages) 완료, TASK.md/CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, QA 통과, 배포 완료. CHANGELOG.md 갱신 포함.
+
+### 변경 파일
+`app.js`, `style.css`만 수정. `functions/`, `migrations/`, `wrangler.toml`, `manifest.json`, `icons.js`,
+`index.html`(viewport 포함) diff 0 확인 — 새 알림 테이블/API/아이콘 추가 없음.
+
+### Today Hero / Prediction Carousel
+- Hero: `<div class="hero">` → `<div class="card hero">`로 마크업만 변경, `.hero` CSS에는
+  `box-shadow: var(--shadow-1)`만 추가(배경/Radius/Border/Padding/margin은 전부 기존 `.card`가 이미
+  제공). 텍스트/계산 로직(`getTodayHeroStatus`, `classifyDate`) 무변경
+- Prediction: `.prediction-slide`의 `color-mix()` 톤별 배경 3줄(period/ovulation/fertile) 전부 제거,
+  배경을 `--color-surface`(흰색) + `border: 1px solid var(--color-border-default)`로 통일. 종류 구분은
+  아이콘 색만 유지(period=`--color-period`, ovulation/fertile=`--color-ovulation` — fertile 전용 진한
+  색 토큰이 없어 Legend와 동일하게 ovulation 색 재사용, 아래 "토큰 관련 제약" 참고). Calendar처럼
+  Shadow까지 넣지 않은 이유: 카드 3장이 나란히 있어 Shadow까지 더하면 누적 무게가 Calendar 카드 1장보다
+  강해짐 — Border만으로 Card 언어를 통일하고 무게는 가장 가볍게 유지
+- 정보 구조(아이콘+라벨 → D-Day+날짜 한 줄), peek, 가로 스크롤, 인디케이터 없음은 전부 무변경
+
+### Notification Center
+- 조사 결과: D1 스키마(`migrations/0001_init.sql`, `0002_love_logs.sql`)에 알림/활동이력 테이블이
+  전혀 없고(`users`/`sessions`/`invites`/`cycle_logs`/`push_subscriptions`/`love_logs`뿐), 관련 API도
+  `functions/api/push/subscribe.js`(Web Push 구독 등록/해지)만 있을 뿐 알림 "목록"을 저장/조회하는
+  엔드포인트가 없음. 지시사항이 API/데이터 모델 변경을 금지하고 가짜 데이터도 금지해, 안전한 선택지 2번
+  ("저장 구조 없으면 빈 상태 UI 우선 구현")을 택함
+- Bell 버튼(`data-action="open-notifications"`)이 기존 Toast 대신 `state.notificationsOpen`을 켜고
+  전체 화면(`renderNotificationCenter()`)으로 이동하도록 변경. Header(← 알림함) + `.empty-state`(항상
+  "알림이 없어요 / 새로운 기록이나 일정이 생기면 알려드릴게요.")만 렌더링
+- **알림 항목 리스트(아이콘/발신주체/본문/시간/읽음상태) UI는 구현하지 않음** — 실제로 렌더될 데이터가
+  전혀 없는 상태에서 List Row 컴포넌트를 미리 만들면 영원히 실행되지 않는 코드가 되어 CLAUDE.md "사용하지
+  않는 코드 생성 금지"에 위배된다고 판단. 대신 `renderNotificationCenter()` 바로 위에 향후 연동 지점을
+  주석으로 명시: 알림 데이터 shape(`{id, type, source, body, createdAt, read, targetDate?}`)과, 알림 탭
+  시 날짜 연결이 필요하면 새 상세 화면을 만들지 않고 기존 `open-date` 액션을 재사용하라는 지침까지 남김
+- Owner/Viewer 모두 동일한 화면(권한 분기 없음) — 항상 빈 상태라 노출되는 정보 자체가 없어 권한별 정보
+  노출 차이도 발생하지 않음
+- 접근성: Bell `aria-label="알림"`(기존), 뒤로가기 `aria-label="뒤로"` 추가. 읽음/안읽음 색상 단독 구분
+  금지 요구사항은 실제 항목이 생길 때 적용 필요(현재는 항목 자체가 없어 해당 없음)
+
+### 더블탭 확대 버그
+- **원인**: 모바일 브라우저는 탭 가능 요소를 빠르게 두 번 탭하면 기본적으로 "더블탭 확대" 제스처로
+  해석한다. 이 프로젝트는 `viewport`에 `user-scalable=no`/`maximum-scale=1`을 쓰지 않아(의도적으로,
+  접근성 때문에) 핀치 줌은 항상 살아있는 대신, 버튼/캘린더 셀 등 어디를 탭해도 브라우저가 그 탭을
+  "확대 제스처의 일부일 수도 있다"고 보고 판정을 지연시키는 게 근본 원인. 표준 해법은 전역 확대를 막는
+  게 아니라, 개별 인터랙티브 요소에 `touch-action: manipulation`을 선언해 "이 요소는 더블탭 확대 대상이
+  아니다"라고 브라우저에 알려주는 것
+- **수정**: `button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }`를 전역
+  버튼 셀렉터에 추가(이 프로젝트의 모든 클릭 가능 컨트롤은 이미 `<button>` 태그로 통일돼 있어
+  `.icon-btn`/`.btn`/`.text-btn`/버튼형 `.list-row` 전부 자동 커버). `<button>`이 아닌 나머지 탭 대상
+  (`.day-cell`, `.prediction-slide`, `.list-row`(div인 경우), `.sheet-backdrop`)에는 별도 규칙으로
+  `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent` + `user-select: none` 추가
+  (텍스트가 있는 div를 빠르게 두 번 탭하면 iOS가 텍스트 선택/확대 루페를 띄우는 것도 함께 방지)
+  - 적용 후보로 제시된 8곳(Header 아이콘/Calendar 이전다음/Calendar 날짜셀/Prediction Card/Selected
+    Date Detail 버튼/Settings Row/Notification Row/Bottom Sheet 버튼) 전부 위 두 규칙의 조합으로 커버됨
+    확인(Settings Row·Notification Row는 `.list-row` 하나로, 나머지 버튼류는 전역 `button{}` 하나로)
+  - `viewport` meta(`user-scalable=no`/`maximum-scale=1`)는 손대지 않음 — 전역 핀치 줌 유지 확인
+- **touch/click 중복 실행 점검**: `appEl`에 `click`/`submit` 리스너만 등록돼 있고 `touchstart`/`touchend`
+  등 별도 터치 리스너는 코드 전체에 없음 — 동일 탭에 대해 두 종류 이벤트가 중복 실행될 구조 자체가 없음을
+  코드 확인으로 검증(grep, 0건)
+- **빠른 연속 탭으로 인한 중복 액션 점검**: `handleDeleteLog`/`handleDeleteLoveLog`는 `confirm()` 네이티브
+  모달이 이미 막아주지만, `cycle-log-form`(저장)과 `add-love-log-form`(사랑기록 추가)은 확인 절차 없이
+  바로 `POST`/`PATCH`를 보내 빠른 연속 탭 시 중복 레코드가 생길 수 있는 실제 위험을 발견. `onAppSubmit`
+  한 곳에 제출 중엔 `submit` 버튼을 `disabled`로 잠갔다가 요청이 끝나면(성공/실패 무관, `finally`) 다시
+  풀어주는 가드를 추가 — 두 폼 핸들러(`handleSaveCycleLog`/`handleAddLoveLog`) 내부는 전혀 건드리지
+  않음. Playwright로 같은 버튼에 즉시 연속 2회 클릭 시 실제 네트워크 요청이 1회만 발생함을 확인
+
+### 토큰 관련 제약 (기존에 보고된 것과 동일, 새로 발생한 문제 아님)
+- `--color-fertile`는 옅은 배경 전용 톤이라 아이콘 색으로 쓰면 대비가 너무 낮음(`--color-fertile-strong`
+  부재는 직전 Sprint에도 보고됨). 이번에도 Legend와 동일하게 `--color-ovulation`을 재사용해 배란/가임기
+  카드 아이콘이 같은 보라색을 공유함 — 라벨 텍스트로는 항상 구분되므로 기능상 문제는 없으나, 색상만으로는
+  둘을 구분할 수 없음. 전용 토큰이 필요하면 DESIGN.md §6.9 절차로 별도 결정 필요
+- `--shadow-1`을 Hero/Calendar에 재사용 — 프로젝트에 Shadow 토큰이 이 하나뿐이라는 제약은 직전 Sprint와
+  동일
+
+### QA 방법 및 결과
+- Google 로그인 없이 `boot()`만 mock 데이터로 임시 교체한 스크래치패드 복사본을 Playwright(Chromium
+  headless, `hasTouch: true`)로 렌더링/조작 확인(실제 배포 코드는 미변경, mock 복사본은 검증 후 폐기)
+- Owner/Viewer Home(Hero/Prediction Card 언어 통일 확인), Owner/Viewer 알림함(빈 상태), Settings 등 5개
+  이상 상태 스크린샷 확인 — 전 케이스 Console Error 0건
+- 인터랙션: Bell 클릭 → 알림함 이동 → 뒤로가기 → Home 복귀 정상, `getComputedStyle().touchAction`으로
+  8개 후보 요소 전부 `manipulation` 적용 확인, 사랑기록 폼 연속 2회 클릭 시 네트워크 요청 1회만 발생 확인
+- `node --check app.js` 문법 통과, CSS 중괄호 짝 확인
+- `git diff --stat`으로 `functions/`, `migrations/`, `index.html` 등 diff 0 재확인
+- **실기기 실사용 테스트는 미실시** — Playwright는 `touch-action` CSS 속성이 올바르게 적용됐음을
+  프로그래매틱으로 확인하지만, 실제 iOS Safari/Android Chrome에서 물리적으로 더블탭했을 때 확대가
+  안 일어나는지는 실기기에서 직접 확인 필요(아래 Known Issue 참고)
+
+### 발견했지만 고치지 않은 기존(pre-existing) 이슈
+- (계속 보고됨) 오늘 날짜가 두 자리 수일 때 "오늘" 점이 숫자와 겹쳐 보이는 문제 — 계산/마커 로직 변경
+  금지 범위라 이번에도 손대지 않음
+
+### 배포
+✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
+원격 D1 작업 불필요.
+
+---
+
+# Current Task (직전 완료분: Home UI 개선 — 알림 버튼/Today Hero/Calendar·Settings 다듬기)
+
+## Goal
 Home UI 개선 Sprint. 기능 변경 없이 UI/레이아웃만 수정. Header에 알림 진입 버튼 추가(내용은 추후 구현),
 Prediction 위에 Today Hero 추가(기존 Prediction 계산 로직 재사용), Calendar를 border 유지하되 매우 약한
 shadow와 더 가벼운 월 이동 버튼으로, Settings 섹션 간 여백 개선. API/상태관리/디자인 토큰 외 신규 값

@@ -33,6 +33,7 @@ const state = {
   inviteResult: null,
   selectedDate: null,
   settingsOpen: false,
+  notificationsOpen: false,
   sheetOpen: false,
 };
 
@@ -155,6 +156,7 @@ async function handleGoogleCredential(response) {
 // ---------- Home screen ----------
 async function renderApp() {
   if (state.settingsOpen) return renderSettingsScreen();
+  if (state.notificationsOpen) return renderNotificationCenter();
 
   appEl.innerHTML = `
     <div class="home-header">
@@ -181,7 +183,7 @@ function renderTodayHero() {
   if (!p || !p.hasData) return "";
   const { title, subtitle } = getTodayHeroStatus(classifyDate(ymd(new Date())));
   return `
-    <div class="hero">
+    <div class="card hero">
       <div class="hero-title">${title}</div>
       <div class="hero-subtitle">${subtitle}</div>
     </div>
@@ -194,6 +196,25 @@ function getTodayHeroStatus(flags) {
   if (flags.ovulation) return { title: "오늘은 배란일", subtitle: "임신 확률이 가장 높은 날" };
   if (flags.fertile) return { title: "오늘은 가임기", subtitle: "임신 확률이 높은 날" };
   return { title: "오늘은 비가임기", subtitle: "임신 확률 낮은 날" };
+}
+
+// ---------- Notification Center ----------
+// 알림을 저장하는 테이블/API가 아직 없어 항상 빈 상태만 보여준다 — 가짜 알림 데이터를 만들지 않음.
+// 향후 실제 알림(파트너의 기록 추가/수정, 사랑기록 추가/삭제, 파트너 연결/초대, 생리 예정일 안내, 시스템
+// 안내 등)을 저장하는 백엔드가 생기면: (1) 이 화면을 열 때 { id, type, source, body, createdAt, read,
+// targetDate? } 형태의 목록을 불러와 List+Divider로 렌더링하고, (2) 알림 탭 시 targetDate가 있으면 기존
+// "open-date" 액션을 재사용해 해당 날짜로 연결한다(새 상세 화면을 만들지 않는다).
+function renderNotificationCenter() {
+  appEl.innerHTML = `
+    <div class="detail-header">
+      <button class="icon-btn header" data-action="close-notifications" aria-label="뒤로">${ArrowLeft()}</button>
+      <div class="detail-date">알림함</div>
+    </div>
+    <div class="empty-state">
+      <div class="empty-state-title">알림이 없어요</div>
+      <p class="hint">새로운 기록이나 일정이 생기면 알려드릴게요.</p>
+    </div>
+  `;
 }
 
 // ---------- Settings screen ----------
@@ -653,7 +674,14 @@ async function onAppClick(e) {
     return renderApp();
   }
   if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
-  if (action === "open-notifications") return showToast("알림센터는 준비 중이에요");
+  if (action === "open-notifications") {
+    state.notificationsOpen = true;
+    return renderApp();
+  }
+  if (action === "close-notifications") {
+    state.notificationsOpen = false;
+    return renderApp();
+  }
   if (action === "open-settings") {
     state.settingsOpen = true;
     return renderApp();
@@ -669,8 +697,17 @@ async function onAppSubmit(e) {
   const form = e.target.closest("form");
   if (!form) return;
   e.preventDefault();
-  if (form.id === "cycle-log-form") return handleSaveCycleLog(form);
-  if (form.id === "add-love-log-form") return handleAddLoveLog(form);
+
+  // 빠른 연속 탭으로 같은 폼이 중복 제출되는 것을 방지 — 제출 중엔 버튼을 잠갔다가 끝나면 푼다
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn && submitBtn.disabled) return;
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    if (form.id === "cycle-log-form") await handleSaveCycleLog(form);
+    if (form.id === "add-love-log-form") await handleAddLoveLog(form);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 // 기록이 있으면(data-id 있음) 수정, 없으면 추가 — 하나의 폼/핸들러로 통일

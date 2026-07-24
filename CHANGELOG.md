@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+### Added (Home 시각 일관성 개선 + 알림함 + 더블탭 버그 수정 Sprint)
+
+- 알림함(Notification Center) 화면 추가 — Home의 Bell 아이콘을 누르면 Toast 대신 실제 전체 화면(← 알림함
+  헤더 + 목록)으로 이동. 알림을 저장하는 테이블/API가 아직 없어(D1 스키마 조사 결과 없음 확인) 가짜 알림
+  데이터를 만들지 않고 "알림이 없어요 / 새로운 기록이나 일정이 생기면 알려드릴게요." 빈 상태만 제공.
+  향후 실제 알림 저장 구조가 추가될 때의 연동 지점(데이터 shape, 날짜 연결 방식)을 코드 주석으로 명시
+- 더블탭 시 화면이 확대되던 버그 수정 — Header 아이콘/Calendar 이전·다음/Calendar 날짜 셀/Prediction
+  Card/Selected Date Detail 버튼/Settings·Notification Row/Bottom Sheet 버튼에 `touch-action:
+  manipulation` 적용. `viewport`의 `user-scalable`/`maximum-scale`은 건드리지 않아 전역 핀치 줌은 그대로
+  유지됨
+- 폼(생리 기록 저장, 사랑기록 추가) 빠른 연속 제출로 인한 중복 데이터 생성 방지 가드 추가(제출 중 버튼
+  잠금)
+
+### Changed (Home 시각 일관성 개선 Sprint)
+
+- Today Hero를 텍스트 전용에서 Calendar와 동일한 Card 언어(흰 배경 + 같은 Radius + 같은 `--shadow-1`
+  약한 그림자)로 변경. 화면 전체를 차지하지 않는 컴팩트한 요약 Card로 유지, 문구/계산 로직은 무변경
+- Prediction Carousel 카드의 핑크/보라 배경 틴트를 제거하고 흰 배경 + 얇은 Border로 통일, 예측 종류
+  구분은 아이콘 색상으로만(카드 3장이 나란히 있어 Shadow는 넣지 않아 Calendar보다 무거워지지 않도록 함)
+
 ### Added (Home UI 개선 Sprint)
 
 - Home 헤더 우측에 알림(Bell) 아이콘 버튼 추가 — Notification Center 진입용 자리만 우선 마련(클릭 시

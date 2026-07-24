@@ -225,9 +225,9 @@ body {
   gap: var(--space-xs);
 }
 
-/* --- Today Hero (카드 아님, 상단 대표 텍스트 영역) --- */
+/* --- Today Hero (Calendar와 같은 Card 컨셉 재사용 — 컴팩트한 요약 Card) --- */
 .hero {
-  margin-bottom: var(--space-xl);
+  box-shadow: var(--shadow-1);
 }
 
 .hero-title {
@@ -372,6 +372,8 @@ p.hint {
 
 .prediction-track::-webkit-scrollbar { display: none; }
 
+/* Calendar와 동일한 Radius/Surface를 쓰되, 나란히 여러 장 보이므로 Shadow는 넣지 않고 얇은 Border만 —
+   여러 장의 Shadow가 겹쳐 Calendar보다 시각적으로 무거워지는 것을 피하기 위함 */
 .prediction-slide {
   flex: 0 0 46%;
   scroll-snap-align: start;
@@ -380,12 +382,9 @@ p.hint {
   gap: 2px;
   padding: var(--space-md) var(--space-base);
   border-radius: var(--radius-md);
-  background: var(--color-surface-soft);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-default);
 }
-
-.prediction-slide.tone-period { background: color-mix(in srgb, var(--color-period) 10%, var(--color-surface-soft)); }
-.prediction-slide.tone-ovulation { background: color-mix(in srgb, var(--color-ovulation) 10%, var(--color-surface-soft)); }
-.prediction-slide.tone-fertile { background: color-mix(in srgb, var(--color-fertile) 60%, var(--color-surface-soft)); }
 
 .prediction-icon {
   display: inline-flex;
@@ -393,8 +392,12 @@ p.hint {
   color: var(--color-text-secondary);
 }
 
+/* 배경색 대신 아이콘 색으로만 예측 종류 구분 */
 .prediction-slide.tone-period .prediction-icon { color: var(--color-period); }
 .prediction-slide.tone-ovulation .prediction-icon { color: var(--color-ovulation); }
+/* --color-fertile(연보라 배경 전용 톤)는 아이콘 색으로 쓰기엔 대비가 너무 낮아 Legend와 동일하게
+   --color-ovulation을 재사용(기존에 보고된 --color-fertile-strong 부재 제약, 새 토큰 추가는 아님) */
+.prediction-slide.tone-fertile .prediction-icon { color: var(--color-ovulation); }
 
 .prediction-slide .label {
   font-size: var(--font-size-caption);
@@ -454,6 +457,20 @@ p.hint {
 /* --- Buttons --- */
 button {
   font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 더블탭 확대 버그 수정 — 이 요소들을 빠르게 두 번 탭해도 브라우저가 확대 제스처로 해석하지 않도록.
+   전역 핀치 줌(사용자가 의도적으로 확대)은 그대로 유지되며, viewport의 user-scalable/maximum-scale은
+   건드리지 않는다 */
+.day-cell,
+.prediction-slide,
+.list-row,
+.sheet-backdrop {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .btn {
@@ -914,6 +931,12 @@ button {
   color: var(--color-text-secondary);
   font-size: var(--font-size-body);
   padding: var(--space-xl) 0;
+}
+
+.empty-state-title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-xs);
 }
 
 .toast {
