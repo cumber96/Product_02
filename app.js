@@ -159,14 +159,41 @@ async function renderApp() {
   appEl.innerHTML = `
     <div class="home-header">
       <div class="home-date">${formatLong(ymd(new Date()))}</div>
-      <button class="icon-btn" data-action="open-settings" aria-label="설정">${Settings()}</button>
+      <div class="home-header-actions">
+        <button class="icon-btn" data-action="open-notifications" aria-label="알림">${Bell()}</button>
+        <button class="icon-btn" data-action="open-settings" aria-label="설정">${Settings()}</button>
+      </div>
     </div>
 
+    ${renderTodayHero()}
     ${renderPredictionCarousel()}
     ${renderCalendarCard()}
     ${renderSelectedDateDetail()}
     ${renderSheet()}
   `;
+}
+
+// ---------- Today Hero ----------
+// Prediction 계산 로직(classifyDate)을 그대로 재사용해 오늘 상태만 텍스트로 요약
+function renderTodayHero() {
+  const p = state.prediction;
+  // Prediction Carousel의 빈 상태 안내와 중복되지 않도록, 예측할 데이터가 없으면 Hero는 표시하지 않음
+  if (!p || !p.hasData) return "";
+  const { title, subtitle } = getTodayHeroStatus(classifyDate(ymd(new Date())));
+  return `
+    <div class="hero">
+      <div class="hero-title">${title}</div>
+      <div class="hero-subtitle">${subtitle}</div>
+    </div>
+  `;
+}
+
+function getTodayHeroStatus(flags) {
+  if (flags.period) return { title: "오늘은 생리 기간", subtitle: "몸이 힘든 시기예요, 무리하지 마세요" };
+  if (flags.predicted) return { title: "오늘은 예상 생리 기간", subtitle: "곧 생리가 시작될 수 있어요" };
+  if (flags.ovulation) return { title: "오늘은 배란일", subtitle: "임신 확률이 가장 높은 날" };
+  if (flags.fertile) return { title: "오늘은 가임기", subtitle: "임신 확률이 높은 날" };
+  return { title: "오늘은 비가임기", subtitle: "임신 확률 낮은 날" };
 }
 
 // ---------- Settings screen ----------
@@ -342,9 +369,9 @@ function renderCalendarCard() {
   return `
     <div class="card calendar-card">
       <div class="calendar-header">
-        <button class="icon-btn month-nav" data-action="prev-month" aria-label="이전 달">${ChevronLeft({ size: 16 })}</button>
+        <button class="icon-btn month-nav" data-action="prev-month" aria-label="이전 달">${ChevronLeft({ size: 14 })}</button>
         <div class="month-label">${monthLabel}</div>
-        <button class="icon-btn month-nav" data-action="next-month" aria-label="다음 달">${ChevronRight({ size: 16 })}</button>
+        <button class="icon-btn month-nav" data-action="next-month" aria-label="다음 달">${ChevronRight({ size: 14 })}</button>
       </div>
       <div class="weekday-row">${WEEKDAYS.map((w) => `<div>${w}</div>`).join("")}</div>
       <div class="calendar-grid">${cells.map(renderDayCell).join("")}</div>
@@ -626,6 +653,7 @@ async function onAppClick(e) {
     return renderApp();
   }
   if (action === "delete-love-log") return handleDeleteLoveLog(btn.dataset.id);
+  if (action === "open-notifications") return showToast("알림센터는 준비 중이에요");
   if (action === "open-settings") {
     state.settingsOpen = true;
     return renderApp();

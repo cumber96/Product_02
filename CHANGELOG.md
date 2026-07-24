@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added (Home UI 개선 Sprint)
+
+- Home 헤더 우측에 알림(Bell) 아이콘 버튼 추가 — Notification Center 진입용 자리만 우선 마련(클릭 시
+  "알림센터는 준비 중이에요" Toast, 실제 알림센터 내용은 추후 구현). 기존 설정 버튼은 그대로 유지
+- Prediction 위에 Today Hero 추가 — 오늘 상태를 "오늘은 OO / (부가 설명)" 형태로 가장 크게 보여줌(카드
+  아닌 상단 대표 텍스트 영역). 기존 Prediction 계산 로직(`classifyDate`)만 재사용해 생리/예상생리/배란일/
+  가임기/비가임기 5단계로 표시, 새 계산 로직 추가 없음
+
+### Changed (Home UI 개선 Sprint)
+
+- Calendar 카드에 border를 복원(직전 Sprint에서 없앴던 것을 되돌림)하고 기존 `--shadow-1` 토큰을 재사용해
+  매우 약한 elevation 추가, 월 이동 버튼을 한 단계 더 가볍게(opacity 0.6, 아이콘 16→14px). 날짜 상태
+  표현·계산 로직·Legend(2줄)는 변경 없음
+- Settings 섹션(List 그룹) 간 여백을 12px → 24px로 확대해 iOS Settings에 가깝게 정리. List 구조·기능은
+  직전 Sprint에서 이미 구현된 그대로 유지
+
 ### Changed (UI Refine Sprint)
 
 - Prediction 카드: 상대 날짜("N일 뒤")와 실제 날짜("M.D (요일)")를 세로로 분리하던 것을 한 줄(좌우 배치)로

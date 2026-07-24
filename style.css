@@ -219,6 +219,31 @@ body {
   color: var(--color-text-primary);
 }
 
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* --- Today Hero (카드 아님, 상단 대표 텍스트 영역) --- */
+.hero {
+  margin-bottom: var(--space-xl);
+}
+
+.hero-title {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+}
+
+.hero-subtitle {
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-subtitle);
+  color: var(--color-text-secondary);
+}
+
 /* --- Profile (Settings) --- */
 .avatar {
   width: 32px;
@@ -250,7 +275,7 @@ body {
 
 /* --- List (Settings) --- */
 .list {
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .list-row {
@@ -481,7 +506,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .detail-header .detail-date {
@@ -491,10 +516,10 @@ button {
 }
 
 /* --- Calendar --- */
-/* Border 최소화 + 여백 중심 — Card 자체 테두리를 빼고 세로 여백을 늘림 */
+/* 여백 중심 유지 + border는 그대로, 매우 약한 elevation만 추가(기존 --shadow-1 토큰 재사용) */
 .calendar-card {
-  border: none;
   padding: var(--space-lg) var(--space-base);
+  box-shadow: var(--shadow-1);
 }
 
 .calendar-header {
@@ -505,10 +530,12 @@ button {
   margin-bottom: var(--space-lg);
 }
 
-/* 월 이동 버튼 — 큰 원형 배경 없이 아이콘만, 터치 영역은 44px을 투명 여백으로 확보 */
+/* 월 이동 버튼 — 큰 원형 배경 없이 아이콘만, 터치 영역은 44px을 투명 여백으로 확보.
+   opacity로 존재감을 한 단계 더 낮춤(새 색 토큰 추가 없이 기존 --color-text-secondary 재사용) */
 .icon-btn.month-nav {
   background: transparent;
   color: var(--color-text-secondary);
+  opacity: 0.6;
   width: 44px;
   height: 44px;
   padding: 0;

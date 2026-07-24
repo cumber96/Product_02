@@ -1,6 +1,125 @@
 # Current Task
 
 ## Goal
+Home UI 개선 Sprint. 기능 변경 없이 UI/레이아웃만 수정. Header에 알림 진입 버튼 추가(내용은 추후 구현),
+Prediction 위에 Today Hero 추가(기존 Prediction 계산 로직 재사용), Calendar를 border 유지하되 매우 약한
+shadow와 더 가벼운 월 이동 버튼으로, Settings 섹션 간 여백 개선. API/상태관리/디자인 토큰 외 신규 값
+추가 금지.
+
+## Background
+직전 UI Refine Sprint(Prediction/Calendar/Settings 구조 개선) 배포 후 실사용 피드백. 오늘 하루의 상태를
+캘린더까지 안 봐도 바로 알 수 있는 대표 영역이 없다는 점, Calendar border를 완전히 없앤 게 오히려
+밋밋해 보인다는 점, Settings 섹션 간격이 더 필요하다는 점을 반영.
+
+## Scope
+- **Header**: 우측에 알림(Bell) 아이콘 버튼 추가(Notification Center 진입용, 내용은 추후 구현 — 이번엔
+  피드백 Toast만 제공), 기존 설정 아이콘은 그 옆에 유지
+- **Today Hero**: Prediction Carousel 위에 카드가 아닌 상단 대표 텍스트 영역 추가. `classifyDate()` 등
+  기존 계산 로직만 재사용해 오늘 상태 문구를 도출(생리/예상생리/배란/가임기/비가임기 5단계), 새 계산 로직
+  추가 금지
+- **Prediction Carousel**: 요청된 "제목 → D-Day → 날짜" 3단 구조는 직전 Sprint에서 이미 구현돼 있어 추가
+  변경 없음(확인만)
+- **Calendar**: `.calendar-card`의 `border: none` 제거(기존 `.card` border 복원), `--shadow-1`(기존
+  유일한 Shadow 토큰) 재사용해 매우 약한 elevation 추가, 월 이동 버튼을 opacity 0.6 + 아이콘 16→14px로
+  한 단계 더 가볍게. 날짜 상태 계산 로직/Legend(2줄) 무변경
+- **Settings**: `.list` 섹션 간 margin-bottom을 `--space-md`→`--space-lg`로, `.detail-header`
+  margin-bottom도 동일하게 확대. List 구조 자체는 직전 Sprint에서 이미 구현됨(iOS Settings류), 이번엔
+  간격만 조정
+- **절대 변경 금지 재확인**: API, 상태관리 방식, 색상 시스템, 신규 Typography/Shadow 토큰 추가 —
+  `functions/`, `migrations/` diff 0 유지
+
+## Definition of Done
+- Header에 알림 버튼이 설정 버튼과 함께 노출되고 클릭 시 피드백(Toast) 제공
+- Today Hero가 Prediction 위에 카드가 아닌 형태로 노출, 5개 상태 텍스트가 실제 계산 결과와 일치
+- Calendar가 border 유지 + 약한 shadow + 더 가벼운 월 이동 버튼으로 보임, 8개 날짜 상태 표현 무변경
+- Settings 섹션 간 여백이 이전보다 넓어짐, 기능(프로필/파트너/알림/로그아웃) 100% 동일
+- 새로운 색상/타이포그래피/Shadow Primitive 추가 없음(기존 토큰만 재사용) — 불가피하게 없는 경우 보고
+- Owner/Viewer 모두 Console Error 없이 정상 동작(QA)
+- `functions/`, `migrations/` diff 0
+- 배포(Cloudflare Pages) 완료, TASK.md/CHANGELOG.md 갱신
+
+## Result
+
+### Status
+✅ 구현 완료, QA 통과, 배포 완료. CHANGELOG.md 갱신 포함.
+
+### 변경 파일
+`app.js`, `style.css`만 수정(+63/-8줄). `functions/`, `migrations/`, `wrangler.toml`, `manifest.json`,
+`icons.js` diff 0 확인(Bell 아이콘은 직전 Sprint에 이미 import돼 있어 재사용, 신규 아이콘 추가 없음).
+
+### Header
+- `.home-header` 우측을 버튼 1개 → `.home-header-actions`(신규 flex wrapper, 기존 `.icon-btn` 컴포넌트만
+  재사용) 안에 Bell/Settings 버튼 2개로 변경
+- `data-action="open-notifications"` 클릭 시 `showToast("알림센터는 준비 중이에요")` — 기존 Toast
+  컴포넌트 재사용, 새 state 필드/화면/API 없음(요청대로 "내용은 추후 구현")
+
+### Today Hero
+- 신규 `renderTodayHero()` + `getTodayHeroStatus()`. 새 계산 로직을 추가하지 않고 기존
+  `classifyDate(오늘)`이 반환하는 `{period, predicted, ovulation, fertile}` 플래그만으로 5단계 문구
+  분기(생리 중 → 예상 생리 → 배란일 → 가임기 → 비가임기, 예시로 준 "오늘은 비가임기 / 임신 확률 낮은
+  날" 포함)
+- 마크업은 `.hero`(카드 아님 — `border`/`background` 없음, `.card`와 무관한 순수 텍스트 블록). 제목은
+  기존 최대 Typography 토큰(`--font-size-title`)에 `--font-weight-bold`를 적용해 시각적으로 가장 무겁게
+  — DESIGN.md §7의 `Display` 토큰은 "필요해지면 정의"로 남겨져 있으나, 이번 지시가 "디자인 토큰만 사용"을
+  명시해 새 Primitive를 추가하지 않고 기존 스케일 안에서 해결함(아래 "토큰 관련 결정" 참고)
+- 예측 데이터가 없는 상태(`!p.hasData`)에서는 Hero를 아예 렌더링하지 않음 — 처음엔 Hero도 자체 빈 상태
+  문구를 넣었다가, Prediction Carousel의 기존 빈 상태 문구("아직 기록이 없어요…")와 내용이 그대로
+  중복되는 걸 QA 스크린샷에서 발견해 제거(Prediction 쪽 문구는 무변경)
+
+### Prediction Carousel
+- 요청된 "제목 → D-Day → 날짜" 3단 구조 예시를 다시 확인한 결과 직전 Sprint에서 이미 구현된
+  `.prediction-slide`(라벨 → `.prediction-meta` 안에 상대 날짜+실제 날짜 한 줄) 구조와 동일해 **코드
+  변경 없음**
+
+### Calendar
+- `.calendar-card`에서 `border: none` 제거 → 상위 `.card`의 기본 border(`1px solid
+  var(--color-border-default)`)가 그대로 복원됨(border 유지 지시 반영)
+- `.calendar-card`에 `box-shadow: var(--shadow-1)` 추가 — 프로젝트에 정의된 유일한 Shadow 토큰을 재사용
+  (신규 Shadow Primitive 추가 없음). 기존엔 Toast에만 쓰이던 토큰이라 카드에 쓰기엔 다소 진하게 느껴질
+  수 있음 — 아래 "확인 필요 사항" 참고
+- `.icon-btn.month-nav`에 `opacity: 0.6` 추가 + 아이콘 크기 16px→14px로 축소(월 이동 버튼을 "현재보다
+  약하게"). 새 색 토큰 없이 기존 `--color-text-secondary` + opacity 조합으로 처리 — `.btn:active`가
+  이미 `filter: brightness()`로 새 토큰 없이 상태를 표현한 전례와 동일한 방식
+- 날짜 상태 8종 표현 방식, `classifyDate()`/`buildCalendarCells()` 등 계산 로직, Legend 2줄 구성 전부
+  무변경(diff 없음)
+
+### Settings
+- `.list`(섹션 그룹 wrapper) margin-bottom: `--space-md`(12px) → `--space-lg`(24px)
+- `.detail-header` margin-bottom도 동일하게 `--space-md` → `--space-lg`(제목과 첫 섹션 사이 여백 확보)
+- List 구조·Row 스타일·기능(프로필/파트너/알림/로그아웃)은 직전 Sprint에서 이미 iOS Settings류로
+  구현돼 있어 간격 조정 외 추가 변경 없음
+
+### 토큰 관련 결정 (확인 필요)
+- **Shadow**: `--shadow-1` 하나만 존재해 그대로 재사용했으나, 원래 Toast(플로팅 요소)용으로 설계된
+  값이라 "매우 약한" 카드 shadow로 쓰기엔 다소 진할 수 있음. 더 약한 `--shadow-xs` 같은 별도 토큰이
+  필요하면 DESIGN.md §6.9에 준하는 별도 결정 필요
+- **Typography**: Hero 제목에 DESIGN.md §7의 `Display`(현재 미정의) 대신 기존 `--font-size-title` +
+  `--font-weight-bold` 조합을 사용. "가장 크게"라는 요청과 완전히 일치하진 않을 수 있음 — 더 큰 Display
+  크기가 필요하면 별도로 알려주면 §6.9와 동일한 절차로 추가 가능
+
+### QA 방법 및 결과
+- 직전 Sprint와 동일한 방식: Google 로그인 없이 `boot()`만 mock 데이터로 임시 교체한 스크래치패드 복사본을
+  Playwright(Chromium headless)로 렌더링 확인(실제 배포 코드는 미변경, mock 복사본은 검증 후 폐기)
+- Owner/Viewer Home, Settings(파트너 연결/미연결/초대 후), Prediction 빈 상태 등 8개 상태 스크린샷 확인
+- 인터랙션 테스트: 알림 버튼 클릭 → Toast "알림센터는 준비 중이에요" 노출, 월 이동(다음 달) → 라벨
+  2026.08로 정상 갱신, 설정 화면 진입 정상
+- 모든 케이스 Console Error/pageerror 0건
+- `node --check app.js` 문법 통과, CSS 중괄호 137/137 짝 확인
+- `git diff --stat`으로 `functions/`, `migrations/` 등 백엔드 diff 0 재확인
+
+### 발견했지만 고치지 않은 기존(pre-existing) 이슈
+- (직전 Sprint에서도 보고) 오늘 날짜가 두 자리 수일 때 "오늘" 점이 숫자와 겹쳐 보이는 문제 — 이번에도
+  재확인됐고, 계산/마커 로직 변경 금지 범위라 이번에도 손대지 않음
+
+### 배포
+✅ 커밋 후 `origin/main`으로 push, Cloudflare Pages Git 연동으로 자동 배포됨. 새 DB 마이그레이션 없어
+원격 D1 작업 불필요.
+
+---
+
+# Current Task (직전 완료분: UI Refine Sprint — Home/Calendar/Settings 구조 개선)
+
+## Goal
 UI Refine Sprint. 기능 변경이 아니라 Home / Calendar / Settings의 UI 구조 개선. Owner/Viewer 동일하게
 적용하며 권한에 따른 기능 차이만 유지. 기존 기능/API/상태관리/DB는 변경하지 않는다.
 
